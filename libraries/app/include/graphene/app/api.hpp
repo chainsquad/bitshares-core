@@ -32,6 +32,7 @@
 
 #include <graphene/debug_witness/debug_api.hpp>
 #include <graphene/hello/hello_api.hpp>
+#include <graphene/mobile/mobile_api.hpp>
 
 #include <graphene/net/node.hpp>
 
@@ -359,6 +360,8 @@ namespace graphene { namespace app {
          fc::api<graphene::debug_witness::debug_api> debug()const;
          /// @brief Retrieve the hello API
          fc::api<graphene::hello::hello_api> hello()const;
+         /// @brief Retrieve the mobile API
+         fc::api<graphene::mobile::mobile_api> mobile()const;
 
          /// @brief Called to enable an API, not reflected.
          void enable_api( const string& api_name );
@@ -374,6 +377,7 @@ namespace graphene { namespace app {
          optional< fc::api<asset_api> > _asset_api;
          optional< fc::api<graphene::debug_witness::debug_api> > _debug_api;
          optional< fc::api<graphene::hello::hello_api> > _hello_api;
+         optional< fc::api<graphene::mobile::mobile_api> > _mobile_api;
    };
 
 }}  // graphene::app
@@ -442,4 +446,5 @@ FC_API(graphene::app::login_api,
        (asset)
        (debug)
        (hello)
+       (mobile)
      )

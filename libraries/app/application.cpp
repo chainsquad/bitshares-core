@@ -485,6 +485,7 @@ namespace detail {
             wild_access.allowed_apis.push_back( "history_api" );
             wild_access.allowed_apis.push_back( "crypto_api" );
             wild_access.allowed_apis.push_back( "hello_api" );
+            wild_access.allowed_apis.push_back( "mobile_api" );
             _apiaccess.permission_map["*"] = wild_access;
          }
 

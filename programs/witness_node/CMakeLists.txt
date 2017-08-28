@@ -16,6 +16,7 @@ target_link_libraries(
    graphene_account_history
    graphene_market_history
    graphene_hello
+   graphene_mobile
    graphene_witness
    graphene_chain
    graphene_debug_witness

@@ -27,6 +27,7 @@
 #include <graphene/account_history/account_history_plugin.hpp>
 #include <graphene/market_history/market_history_plugin.hpp>
 #include <graphene/hello/hello_plugin.hpp>
+#include <graphene/mobile/mobile_plugin.hpp>
 
 #include <fc/exception/exception.hpp>
 #include <fc/thread/thread.hpp>
@@ -79,6 +80,7 @@ int main(int argc, char** argv) {
       auto history_plug = node->register_plugin<account_history::account_history_plugin>();
       auto market_history_plug = node->register_plugin<market_history::market_history_plugin>();
       auto hello_plug = node->register_plugin<hello_plugin::hello_plugin>();
+      auto mobile_plug = node->register_plugin<mobile_plugin::mobile_plugin>();
 
       try
       {

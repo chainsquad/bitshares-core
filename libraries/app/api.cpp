@@ -104,6 +104,10 @@ namespace graphene { namespace app {
        {
           _hello_api = std::make_shared< graphene::hello::hello_api >( std::ref(_app) );
        }
+       else if( api_name == "mobile_api" )
+       {
+          _mobile_api = std::make_shared< graphene::mobile::mobile_api >( std::ref(_app) );
+       }
        else if( api_name == "asset_api" )
        {
           _asset_api = std::make_shared< asset_api >( std::ref( *_app.chain_database() ) );
@@ -276,6 +280,12 @@ namespace graphene { namespace app {
     {
        FC_ASSERT(_hello_api);
        return *_hello_api;
+    }
+
+    fc::api<graphene::mobile::mobile_api> login_api::mobile() const
+    {
+       FC_ASSERT(_mobile_api);
+       return *_mobile_api;
     }
 
     vector<account_id_type> get_relevant_accounts( const object* obj )

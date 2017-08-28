@@ -17,6 +17,7 @@ target_link_libraries(
     graphene_market_history
     graphene_account_history
     graphene_hello
+    graphene_mobile
     graphene_chain
     fc
     graphene_db
