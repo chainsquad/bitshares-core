@@ -2,6 +2,7 @@
 #pragma once
 
 #include <fc/api.hpp>
+#include <graphene/mobile/mobile_account.hpp>
 
 /*
  * We need this so we can refer to graphene::app::application without including the entire header
@@ -37,8 +38,28 @@ class mobile_api
        */
       void on_api_startup();
 
-      // TODO: Add API methods here
-      uint32_t mobile();
+      /**
+       * @brief Fetch a reduced set of information relevant to the specified accounts
+       * @param names_or_ids Each item must be the name or ID of an account to retrieve
+       * @return Map of string from @ref names_or_ids to the corresponding account
+       *
+       * This function fetches a reduced set of information relevant for the given accounts.
+       * If any of the strings in @ref names_or_ids cannot be tied to an account, that input
+       * will be ignored.  All other accounts will be retrieved.
+       *
+       */
+      std::map<string,mobile_account> get_mobile_accounts( const vector<string>& names_or_ids );
+
+      /**
+       * @brief Fetch the balances of an account
+       * @param names_or_ids Each item must be the name or ID of an account to retrieve
+       * @return Vector of balance describing objects
+       *
+       * This function fetches a mobile-friendly version of each
+       * balance/asset in an account.
+       *
+       */
+      vector<mobile_account_balance_object> get_mobile_balances( const string& name_or_id );
 
    private:
       /*
@@ -54,5 +75,6 @@ class mobile_api
  * Structs 
  */
 FC_API( graphene::mobile::mobile_api,
-    (mobile)
+    (get_mobile_accounts)
+    (get_mobile_balances)
 )
