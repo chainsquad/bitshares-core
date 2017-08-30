@@ -22,12 +22,15 @@ class mobile_api_impl
 
       std::map<string,mobile_account> get_mobile_accounts( const vector<string>& names_or_ids );
       vector<mobile_account_balance_object> get_mobile_balances( const string& name_or_id );
+      vector<vector<account_id_type>> get_mobile_key_references( vector<public_key_type> key )const;
+
+      graphene::chain::database& _db;
 };
 
 /**
  * Constructor Implementation
  */
-mobile_api_impl::mobile_api_impl( graphene::app::application& _app ) : app( _app )
+mobile_api_impl::mobile_api_impl( graphene::app::application& _app ) : app( _app ), _db( *_app.chain_database() )
 {}
 
 /**
@@ -46,17 +49,15 @@ std::map<std::string, mobile_account> mobile_api_impl::get_mobile_accounts( cons
 {
    idump((names_or_ids));
    std::map<std::string, mobile_account> results;
-   // Obtain access to the internal database objects
-   std::shared_ptr< graphene::chain::database > _db = app.chain_database();
 
    for (const std::string& account_name_or_id : names_or_ids)
    {
       const account_object* account = nullptr;
       if (std::isdigit(account_name_or_id[0]))
-         account = _db->find(fc::variant(account_name_or_id).as<account_id_type>());
+         account = _db.find(fc::variant(account_name_or_id).as<account_id_type>());
       else
       {
-         const auto& idx = _db->get_index_type<account_index>().indices().get<by_name>();
+         const auto& idx = _db.get_index_type<account_index>().indices().get<by_name>();
          auto itr = idx.find(account_name_or_id);
          if (itr != idx.end())
             account = &*itr;
@@ -76,12 +77,12 @@ std::map<std::string, mobile_account> mobile_api_impl::get_mobile_accounts( cons
       acnt.account = account_object;
 
       // Add the account's balances
-      auto balance_range = _db->get_index_type<account_balance_index>().indices().get<by_account_asset>().equal_range(boost::make_tuple(account->id));
+      auto balance_range = _db.get_index_type<account_balance_index>().indices().get<by_account_asset>().equal_range(boost::make_tuple(account->id));
       //vector<account_balance_object> balances;
       std::for_each(balance_range.first, balance_range.second,
-                    [&acnt, &_db](const account_balance_object& balance) {
+                    [&acnt, this](const account_balance_object& balance) {
                        // get corresponding asset
-                       asset_object balance_asset = _db->get(balance.asset_type);
+                       asset_object balance_asset = _db.get(balance.asset_type);
                        // construct mobile account balance object
                        mobile_account_balance_object mobile_balance;
                        mobile_balance.balance = balance.balance;
@@ -99,15 +100,12 @@ vector<mobile_account_balance_object> mobile_api_impl::get_mobile_balances( cons
    // Return object
    vector<mobile_account_balance_object> balances;
 
-   // Obtain access to the internal database objects
-   std::shared_ptr< graphene::chain::database > _db = app.chain_database();
-
    const account_object* account = nullptr;
    if (std::isdigit(name_or_id[0]))
-      account = _db->find(fc::variant(name_or_id).as<account_id_type>());
+      account = _db.find(fc::variant(name_or_id).as<account_id_type>());
    else
    {
-      const auto& idx = _db->get_index_type<account_index>().indices().get<by_name>();
+      const auto& idx = _db.get_index_type<account_index>().indices().get<by_name>();
       auto itr = idx.find(name_or_id);
       if (itr != idx.end())
          account = &*itr;
@@ -116,12 +114,12 @@ vector<mobile_account_balance_object> mobile_api_impl::get_mobile_balances( cons
       return balances;
 
    // Add the account's balances
-   auto balance_range = _db->get_index_type<account_balance_index>().indices().get<by_account_asset>().equal_range(boost::make_tuple(account->id));
+   auto balance_range = _db.get_index_type<account_balance_index>().indices().get<by_account_asset>().equal_range(boost::make_tuple(account->id));
    //vector<account_balance_object> balances;
    std::for_each(balance_range.first, balance_range.second,
-                 [&balances, &_db](const account_balance_object& balance) {
+                 [&balances, this](const account_balance_object& balance) {
                     // get corresponding asset
-                    asset_object balance_asset = _db->get(balance.asset_type);
+                    asset_object balance_asset = _db.get(balance.asset_type);
                     // construct mobile account balance object
                     mobile_account_balance_object mobile_balance;
                     mobile_balance.balance = balance.balance;
@@ -130,6 +128,51 @@ vector<mobile_account_balance_object> mobile_api_impl::get_mobile_balances( cons
                     balances.emplace_back(mobile_balance);
                  });
    return balances;
+}
+
+vector<vector<account_id_type>> mobile_api_impl::get_mobile_key_references( vector<public_key_type> keys )const
+{
+   wdump( (keys) );
+   vector< vector<account_id_type> > final_result;
+   final_result.reserve(keys.size());
+
+   for( auto& key : keys )
+   {
+      address a1( pts_address(key, false, 56) );
+      address a2( pts_address(key, true, 56) );
+      address a3( pts_address(key, false, 0)  );
+      address a4( pts_address(key, true, 0)  );
+      address a5( key );
+
+      const auto& idx = _db.get_index_type<account_index>();
+      const auto& aidx = dynamic_cast<const primary_index<account_index>&>(idx);
+      const auto& refs = aidx.get_secondary_index<graphene::chain::account_member_index>();
+      auto itr = refs.account_to_key_memberships.find(key);
+      vector<account_id_type> result;
+
+      for( auto& a : {a1,a2,a3,a4,a5} )
+      {
+          auto itr = refs.account_to_address_memberships.find(a);
+          if( itr != refs.account_to_address_memberships.end() )
+          {
+             result.reserve( itr->second.size() );
+             for( auto item : itr->second )
+             {
+                wdump((a)(item)(item(_db).name));
+                result.push_back(item);
+             }
+          }
+      }
+
+      if( itr != refs.account_to_key_memberships.end() )
+      {
+         result.reserve( itr->second.size() );
+         for( auto item : itr->second ) result.push_back(item);
+      }
+      final_result.emplace_back( std::move(result) );
+   }
+
+   return final_result;
 }
 
 
@@ -157,6 +200,11 @@ std::map<string,mobile_account> mobile_api::get_mobile_accounts( const vector<st
 vector<mobile_account_balance_object> mobile_api::get_mobile_balances( const string& name_or_id )
 {
    return my->get_mobile_balances( name_or_id );
+}
+
+vector<vector<account_id_type>> mobile_api::get_mobile_key_references( vector<public_key_type> key )const
+{
+   return my->get_mobile_key_references( key );
 }
 
 } } // graphene::mobile

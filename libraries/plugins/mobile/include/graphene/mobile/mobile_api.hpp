@@ -61,6 +61,14 @@ class mobile_api
        */
       vector<mobile_account_balance_object> get_mobile_balances( const string& name_or_id );
 
+      /**
+       * @brief Obtain a list of accounts that use a given public key
+       * @param key Vector of public key Base58Check encoded, e.g. BTS54ygSazvgwXVVFaMfutf9BxVatchAvxaVwscTxjikeeJBQmrVt
+       * @return Vector of account ids per public key
+       *
+       */
+      vector<vector<account_id_type>> get_mobile_key_references( vector<public_key_type> key )const;
+
    private:
       /*
        * The implementation instance is stored privately in `my`
@@ -77,4 +85,5 @@ class mobile_api
 FC_API( graphene::mobile::mobile_api,
     (get_mobile_accounts)
     (get_mobile_balances)
+    (get_mobile_key_references)
 )
