@@ -2,6 +2,7 @@ file(GLOB HEADERS "include/graphene/mobile/*.hpp")
 
 add_library( graphene_mobile
              ${HEADERS}
+             mobile_subscriptions.cpp
              mobile_plugin.cpp
              mobile_api.cpp
            )

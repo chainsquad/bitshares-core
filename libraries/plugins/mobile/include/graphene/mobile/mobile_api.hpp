@@ -69,6 +69,13 @@ class mobile_api
        */
       vector<vector<account_id_type>> get_mobile_key_references( vector<public_key_type> key )const;
 
+      /**
+       * @brief set a subscription callback
+       * @param callback
+       *
+       */
+      void set_subscribe_callback( std::function<void(const variant&)> cb );
+
    private:
       /*
        * The implementation instance is stored privately in `my`
@@ -86,4 +93,5 @@ FC_API( graphene::mobile::mobile_api,
     (get_mobile_accounts)
     (get_mobile_balances)
     (get_mobile_key_references)
+    (set_subscribe_callback)
 )
