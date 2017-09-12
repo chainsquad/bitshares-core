@@ -1,5 +1,7 @@
 #include <graphene/app/database_api.hpp>
 #include <graphene/mobile/mobile_subscriptions.hpp>
+#include <graphene/mobile/mobile_account.hpp>
+#include <fc/bloom_filter.hpp>
 
 namespace graphene { namespace mobile {
 
@@ -10,12 +12,17 @@ namespace graphene { namespace mobile {
          public:
             subscriptions_impl(graphene::chain::database& db);
             void set_subscribe_callback( std::function<void(const variant&)> cb );
+            void subscribe_to_account(account_id_type account_id);
 
          private:
             graphene::chain::database& _db;
 
             void broadcast_updates( const vector<variant>& updates );
-            void handle_object_changed(bool force_notify, bool full_object, const vector<object_id_type>& ids, const flat_set<account_id_type>& impacted_accounts, std::function<const object*(object_id_type id)> find_object);
+            void handle_object_changed(bool force_notify,
+                  bool full_object,
+                  const vector<object_id_type>& ids,
+                  const flat_set<account_id_type>& impacted_accounts,
+                  std::function<const object*(object_id_type id)> find_object);
 
             /** called every time a block is applied to report the objects that were changed */
             void on_objects_new(const vector<object_id_type>& ids, const flat_set<account_id_type>& impacted_accounts);
@@ -27,7 +34,23 @@ namespace graphene { namespace mobile {
             boost::signals2::scoped_connection _applied_block_connection;
 
             /// The callback for subscriptions
+            std::set<std::vector<char>> _subscribed_ids;
+            std::set<account_id_type> _subscribed_accounts;
             std::function<void(const fc::variant&)> _subscribe_callback;
+
+            bool is_impacted_account( const flat_set<account_id_type>& accounts)
+            {
+               if( !_subscribed_accounts.size() || !accounts.size() )
+                  return false;
+
+               return std::any_of(
+                  accounts.begin(),
+                  accounts.end(),
+                  [this](const account_id_type& account) {
+                     return _subscribed_accounts.find(account) != _subscribed_accounts.end();
+                  });
+            }
+
       };
 
       subscriptions_impl::subscriptions_impl( graphene::chain::database& _db ) :
@@ -64,6 +87,18 @@ namespace graphene { namespace mobile {
       void subscriptions_impl::set_subscribe_callback( std::function<void(const variant&)> cb )
       {
          _subscribe_callback = cb;
+
+         _subscribed_accounts.clear();
+      }
+
+      void subscriptions_impl::subscribe_to_account(account_id_type account_id)
+      {
+         if( _subscribe_callback )
+         {
+            FC_ASSERT( _subscribed_accounts.size() <= 100 );
+            _subscribed_accounts.insert( account_id );
+            wlog("Enabled subscription for account ${id}", ("id", account_id));
+         }
       }
 
       void subscriptions_impl::on_objects_new(const vector<object_id_type>& ids, const flat_set<account_id_type>& impacted_accounts)
@@ -95,57 +130,44 @@ namespace graphene { namespace mobile {
             const flat_set<account_id_type>& impacted_accounts,
             std::function<const object*(object_id_type id)> find_object)
       {
-         /*
          if( _subscribe_callback )
          {
             vector<variant> updates;
 
             for(auto id : ids)
             {
-               if( force_notify || is_subscribed_to_item(id) || is_impacted_account(impacted_accounts) )
+               // wlog("Subscribed to id ${id}", ("id", id));
+               if( force_notify || is_impacted_account(impacted_accounts) )
                {
-                  if( full_object )
+                  // account_balance_id_type
+                  if( id.is<account_balance_id_type>() )
                   {
                      auto obj = find_object(id);
                      if( obj )
                      {
-                        updates.emplace_back( obj->to_variant() );
+                        auto balance = dynamic_cast<const account_balance_object*>(obj);
+                        mobile_balance_update_object updated_balance;
+                        asset_object balance_asset = _db.get(balance->asset_type);
+                        mobile_account_balance_object mobile_balance;
+                        mobile_balance.balance = balance->balance;
+                        mobile_balance.precision = balance_asset.precision;
+                        mobile_balance.symbol = balance_asset.symbol;
+                        updated_balance.new_balance = mobile_balance;
+
+                        account_object owner = _db.get(balance->owner);
+                        updated_balance.name = owner.name;
+
+                        updates.emplace_back( updated_balance.to_variant() );
                      }
                   }
-                  else
-                  {
-                     updates.emplace_back( id );
-                  }
                }
             }
-
             broadcast_updates(updates);
          }
-
-         if( _market_subscriptions.size() )
-         {
-            market_queue_type broadcast_queue;
-
-            for(auto id : ids)
-            {
-               if( id.is<call_order_object>() )
-               {
-                  enqueue_if_subscribed_to_market<call_order_object>( find_object(id), broadcast_queue, full_object );
-               }
-               else if( id.is<limit_order_object>() )
-               {
-                  enqueue_if_subscribed_to_market<limit_order_object>( find_object(id), broadcast_queue, full_object );
-               }
-            }
-
-            broadcast_market_updates(broadcast_queue);
-         }
-         */
       }
 
       void subscriptions_impl::broadcast_updates( const vector<variant>& updates )
       {
-         /*
          if( updates.size() && _subscribe_callback ) {
             auto capture_this = shared_from_this();
             fc::async([capture_this,updates](){
@@ -153,7 +175,6 @@ namespace graphene { namespace mobile {
                   capture_this->_subscribe_callback( fc::variant(updates) );
             });
          }
-         */
       }
 
       void subscriptions_impl::on_applied_block()
@@ -179,6 +200,11 @@ namespace graphene { namespace mobile {
    void subscriptions::set_subscribe_callback( std::function<void(const variant&)> cb )
    {
       my->set_subscribe_callback( cb );
+   }
+
+   void subscriptions::subscribe_to_account(account_id_type account_id)
+   {
+      my->subscribe_to_account(account_id);
    }
 
 }}

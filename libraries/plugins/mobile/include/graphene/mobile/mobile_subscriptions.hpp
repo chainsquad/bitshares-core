@@ -16,6 +16,7 @@ namespace graphene { namespace mobile {
          subscriptions(graphene::chain::database& db);
          ~subscriptions();
          void set_subscribe_callback( std::function<void(const variant&)> cb );
+         void subscribe_to_account(account_id_type account_id);
 
       private:
          std::shared_ptr< detail::subscriptions_impl > my;

@@ -71,6 +71,9 @@ namespace detail {
          if (account == nullptr)
             continue;
 
+         // Subscribe to this account
+         _subscriptions->subscribe_to_account(account->get_id());
+
          // Account
          mobile_account acnt;
 

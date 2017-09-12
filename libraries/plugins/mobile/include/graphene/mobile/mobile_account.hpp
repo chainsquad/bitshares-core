@@ -33,6 +33,20 @@ namespace mobile {
       vector<mobile_account_balance_object>   balances;
    };
 
+   /*
+    * Updates of mobile account balances
+    */
+   // Inherits abstract_object so we can use to_variant()
+   class mobile_balance_update_object : public graphene::db::abstract_object<mobile_balance_update_object>
+   {
+      public:
+         static const uint8_t space_id = implementation_ids;
+         static const uint8_t type_id  = 149;
+
+         string            name;
+         mobile_account_balance_object    new_balance;
+   };
+
 }}
 
 FC_REFLECT( graphene::mobile::mobile_account,
@@ -45,4 +59,8 @@ FC_REFLECT( graphene::mobile::mobile_account_object,
 
 FC_REFLECT( graphene::mobile::mobile_account_balance_object,
             (balance)(symbol)(precision)
+          );
+
+FC_REFLECT( graphene::mobile::mobile_balance_update_object,
+            (name)(new_balance)
           );
