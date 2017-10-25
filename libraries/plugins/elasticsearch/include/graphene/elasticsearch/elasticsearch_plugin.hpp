@@ -25,7 +25,10 @@
 
 #include <graphene/app/plugin.hpp>
 #include <graphene/chain/database.hpp>
+
 #include <graphene/chain/operation_history_object.hpp>
+
+#include <fc/thread/future.hpp>
 
 namespace graphene { namespace elasticsearch {
    using namespace chain;
@@ -65,7 +68,6 @@ class elasticsearch_plugin : public graphene::app::plugin
       virtual ~elasticsearch_plugin();
 
       std::string plugin_name()const override;
-      std::string plugin_description()const override;
       virtual void plugin_set_program_options(
          boost::program_options::options_description& cli,
          boost::program_options::options_description& cfg) override;
@@ -86,8 +88,6 @@ struct operation_visitor
 
    asset_id_type transfer_asset_id;
    share_type transfer_amount;
-   account_id_type transfer_from;
-   account_id_type transfer_to;
 
    void operator()( const graphene::chain::transfer_operation& o )
    {
@@ -96,64 +96,239 @@ struct operation_visitor
 
       transfer_asset_id = o.amount.asset_id;
       transfer_amount = o.amount.amount;
-      transfer_from = o.from;
-      transfer_to = o.to;
    }
-   template<typename T>
-   void operator()( const T& o )
+   void operator()( const graphene::chain::limit_order_create_operation& o )
    {
       fee_asset = o.fee.asset_id;
       fee_amount = o.fee.amount;
    }
-};
+   void operator()( const graphene::chain::limit_order_cancel_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::call_order_update_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::fill_order_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::account_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::account_update_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::account_whitelist_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::account_upgrade_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::account_transfer_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_update_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_update_bitasset_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_update_feed_producers_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_issue_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_reserve_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_fund_fee_pool_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_settle_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_global_settle_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_publish_feed_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::witness_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::witness_update_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::proposal_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::proposal_update_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::proposal_delete_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::withdraw_permission_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::withdraw_permission_update_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::withdraw_permission_claim_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::withdraw_permission_delete_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::committee_member_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::committee_member_update_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::committee_member_update_global_parameters_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::vesting_balance_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::vesting_balance_withdraw_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::worker_create_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::custom_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::assert_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::balance_claim_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::override_transfer_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::transfer_to_blind_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::blind_transfer_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::transfer_from_blind_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_settle_cancel_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::asset_claim_fees_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::fba_distribute_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::bid_collateral_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
+   void operator()( const graphene::chain::execute_bid_operation& o )
+   {
+      fee_asset = o.fee.asset_id;
+      fee_amount = o.fee.amount;
+   }
 
-struct operation_history_struct {
-   int trx_in_block;
-   int op_in_trx;
-   std::string operation_result;
-   int virtual_op;
-   std::string op;
-};
-
-struct block_struct {
-   int block_num;
-   fc::time_point_sec block_time;
-   std::string trx_id;
-};
-
-struct fee_struct {
-   asset_id_type asset;
-   share_type amount;
-};
-
-struct transfer_struct {
-   asset_id_type asset;
-   share_type amount;
-   account_id_type from;
-   account_id_type to;
-};
-
-struct visitor_struct {
-   fee_struct fee_data;
-   transfer_struct transfer_data;
-};
-
-struct bulk_struct {
-   account_transaction_history_object account_history;
-   operation_history_struct operation_history;
-   int operation_type;
-   block_struct block_data;
-   visitor_struct additional_data;
 };
 
 
 } } //graphene::elasticsearch
-
-FC_REFLECT( graphene::elasticsearch::operation_history_struct, (trx_in_block)(op_in_trx)(operation_result)(virtual_op)(op) )
-FC_REFLECT( graphene::elasticsearch::block_struct, (block_num)(block_time)(trx_id) )
-FC_REFLECT( graphene::elasticsearch::fee_struct, (asset)(amount) )
-FC_REFLECT( graphene::elasticsearch::transfer_struct, (asset)(amount)(from)(to) )
-FC_REFLECT( graphene::elasticsearch::visitor_struct, (fee_data)(transfer_data) )
-FC_REFLECT( graphene::elasticsearch::bulk_struct, (account_history)(operation_history)(operation_type)(block_data)(additional_data) )
-
-
