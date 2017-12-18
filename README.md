@@ -1,13 +1,5 @@
 BitShares Core
 ==============
-
-[Build Status](https://travis-ci.org/bitshares/bitshares-core/branches):
-
-`master` | `develop` | `hardfork` | `testnet` | `bitshares-fc` 
- --- | --- | --- | --- | ---
- [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=master)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=develop)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=hardfork)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=testnet)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-fc.svg?branch=master)](https://travis-ci.org/bitshares/bitshares-fc) 
-
-
 * [Getting Started](#getting-started)
 * [Support](#support)
 * [Using the API](#using-the-api)
@@ -65,8 +57,7 @@ the blockchain. After syncing, you can exit the node using Ctrl+C and setup the 
 
     rpc-endpoint = 127.0.0.1:8090
 
-**NOTE:** By default the witness node will start in reduced memory ram mode by using some of the commands detailed in [Memory reduction for nodes](https://github.com/bitshares/bitshares-core/wiki/Memory-reduction-for-nodes).
-In order to run a full node with all the account history you need to remove `partial-operations` and `max-ops-per-account` from your config file. Please note that currently(2017-12-23) a full node need 54GB of RAM to operate and required memory is growing fast.
+**NOTE:** Currently(2017-09-04) a full node need 40GB of RAM to operate and required memory is growing fast. To start a node with reduced RAM check the following: [Memory reduction for nodes](https://github.com/bitshares/bitshares-core/wiki/Memory-reduction-for-nodes).
 
 After starting the witness node again, in a separate terminal you can run:
 
@@ -93,8 +84,6 @@ Technical support is available in the [BitSharesTalk technical support subforum]
 BitShares Core bugs can be reported directly to the [issue tracker](https://github.com/bitshares/bitshares-core/issues).
 
 BitShares UI bugs should be reported to the [UI issue tracker](https://github.com/bitshares/bitshares-ui/issues)
-
-Up to date online Doxygen documentation can be found at [Doxygen](https://bitshares.org/doxygen/hierarchy.html)
 
 Using the API
 -------------
