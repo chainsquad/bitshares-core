@@ -947,7 +947,7 @@ BOOST_AUTO_TEST_CASE( stealth_fba_test )
 BOOST_AUTO_TEST_CASE( defaults_test )
 { try {
     fee_schedule schedule;
-    const limit_order_create_operation::fee_parameters_type default_order_fee;
+    const limit_order_create_operation::fee_parameters_type default_order_fee{};
 
     // no fees set yet -> default
     asset fee = schedule.calculate_fee( limit_order_create_operation() );
@@ -961,7 +961,7 @@ BOOST_AUTO_TEST_CASE( defaults_test )
 
     // bid_collateral fee defaults to call_order_update fee
     // call_order_update fee is unset -> default
-    const call_order_update_operation::fee_parameters_type default_short_fee;
+    const call_order_update_operation::fee_parameters_type default_short_fee{};
     call_order_update_operation::fee_parameters_type new_short_fee; new_short_fee.fee = 123;
     fee = schedule.calculate_fee( bid_collateral_operation() );
     BOOST_CHECK_EQUAL( default_short_fee.fee, fee.amount.value );
