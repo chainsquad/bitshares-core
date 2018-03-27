@@ -1,4 +1,19 @@
 BitShares Core
+==============
+
+[Build Status](https://travis-ci.org/bitshares/bitshares-core/branches):
+
+`master` | `develop` | `hardfork` | `testnet` | `bitshares-fc` 
+ --- | --- | --- | --- | ---
+ [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=master)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=develop)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=hardfork)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-core.svg?branch=testnet)](https://travis-ci.org/bitshares/bitshares-core) | [![](https://travis-ci.org/bitshares/bitshares-fc.svg?branch=master)](https://travis-ci.org/bitshares/bitshares-fc) 
+
+
+* [Getting Started](#getting-started)
+* [Support](#support)
+* [Using the API](#using-the-api)
+* [Accessing restricted API's](#accessing-restricted-apis)
+* [FAQ](#faq)
+* [License](#license)
 
 BitShares Core is the BitShares blockchain implementation and command-line interface.
 The web wallet is [BitShares UI](https://github.com/bitshares/bitshares-ui).
@@ -78,6 +93,8 @@ Technical support is available in the [BitSharesTalk technical support subforum]
 BitShares Core bugs can be reported directly to the [issue tracker](https://github.com/bitshares/bitshares-core/issues).
 
 BitShares UI bugs should be reported to the [UI issue tracker](https://github.com/bitshares/bitshares-ui/issues)
+
+Up to date online Doxygen documentation can be found at [Doxygen](https://bitshares.org/doxygen/hierarchy.html)
 
 Using the API
 -------------
