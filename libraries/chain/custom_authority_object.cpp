@@ -50,7 +50,7 @@ namespace  {
     }
 }
 
-void custom_authority_object::validate(const operation& an_operation, const time_point now) const
+void custom_authority_object::validate(const operation& an_operation, const time_point_sec now) const
 {
     if (now < valid_from || valid_to < now)
     {
