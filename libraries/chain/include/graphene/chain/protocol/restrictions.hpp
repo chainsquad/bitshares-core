@@ -136,6 +136,40 @@ public:
 private:
     int64_t m_value;
 };
+
+class greater
+{
+public:
+    greater(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) > m_value, "Argument is not greater than value.");
+    }
+    
+private:
+    int64_t m_value;
+};
+    
+class greater_or_equal
+{
+public:
+    greater_or_equal(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) >= m_value, "Argument is not greater or equal than value.");
+    }
+    
+private:
+    int64_t m_value;
+};
     
 class any_of
 {
@@ -249,10 +283,12 @@ private:
    std::vector<generic_member> m_values;
 };
 
-typedef base_restriction<equal>                     eq_restriction;
-typedef base_restriction<not_equal>                 neq_restriction;
-typedef base_comparision_restriction<less>          lt_restriction;
-typedef base_comparision_restriction<less_or_equal> le_restriction;
+typedef base_restriction<equal>                        eq_restriction;
+typedef base_restriction<not_equal>                    neq_restriction;
+typedef base_comparision_restriction<less>             lt_restriction;
+typedef base_comparision_restriction<less_or_equal>    le_restriction;
+typedef base_comparision_restriction<greater>          gt_restriction;
+typedef base_comparision_restriction<greater_or_equal> ge_restriction;
 typedef base_list_restriction<any_of>               any_restriction;
 typedef base_list_restriction<none_of>              none_restriction;
 typedef base_list_restriction<contains_all>         contains_all_restriction;
