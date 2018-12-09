@@ -54,6 +54,20 @@ struct base_list_restriction
       fc::reflector<Operation>::visit(visitor);
    }
 };
+    
+template <typename Action>
+struct base_comparision_restriction
+{
+    int64_t value;
+    std::string argument;
+    
+    template <typename Operation>
+    void validate( const Operation& op ) const
+    {
+        member_visitor<Operation, Action> visitor(argument, Action(value), op);
+        fc::reflector<Operation>::visit(visitor);
+    }
+};
 
 class equal
 {
@@ -87,6 +101,23 @@ public:
    
 private:
    generic_member m_value;
+};
+    
+class less
+{
+public:
+    less(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) < m_value, "Argument is not less than value.");
+    }
+    
+private:
+    int64_t m_value;
 };
 
 class any_of
@@ -203,6 +234,7 @@ private:
 
 typedef base_restriction<equal>              eq_restriction;
 typedef base_restriction<not_equal>          neq_restriction;
+typedef base_comparision_restriction<less>   lt_restriction;
 typedef base_list_restriction<any_of>        any_restriction;
 typedef base_list_restriction<none_of>       none_restriction;
 typedef base_list_restriction<contains_all>  contains_all_restriction;

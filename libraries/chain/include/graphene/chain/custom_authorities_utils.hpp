@@ -109,5 +109,37 @@ const account_id_type& get<account_id_type>(const generic_member& a_variant)
 {
 	return a_variant.get<account_id_type>();
 }
-	
+    
+template <typename T>
+const T& to_integer(const generic_member& a_variant)
+{
+    FC_THROW("Can't fetch value. Type '${type_name}' is not supported for now.", ("type_name", fc::get_typename<T>::name()));
+}
+
+struct number_to_integer
+{
+    template <typename T>
+    static int64_t convert(const T& number)
+    {
+        return static_cast<int64_t>(number);
+    }
+};
+
+struct not_number_to_integer
+{
+    template <typename T>
+    static int64_t convert(const T& number)
+    {
+        FC_THROW("Can't conver type to integer.");
+    }
+};
+    
+template <typename T>
+int64_t to_integer(const T& value)
+{
+    return boost::mpl::if_<std::is_convertible<T, int64_t>,
+                            number_to_integer,
+                            not_number_to_integer>::type::convert(value);
+}
+    
 } } 

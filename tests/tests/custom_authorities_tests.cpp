@@ -306,4 +306,40 @@ BOOST_AUTO_TEST_CASE( validation_fails_for_contains_none_restriction_when_argume
     BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
+BOOST_AUTO_TEST_CASE( lt_restriction_passes_for_argument_less_than_value)
+{
+    account_create_operation operation;
+    operation.referrer_percent = 50;
+    
+    lt_restriction restriction;
+    restriction.value = 60;
+    restriction.argument = "referrer_percent";
+    
+    BOOST_CHECK_NO_THROW(restriction.validate(operation));
+}
+
+BOOST_AUTO_TEST_CASE( lt_restriction_fails_for_argument_equals_to_value)
+{
+    account_create_operation operation;
+    operation.referrer_percent = 50;
+    
+    lt_restriction restriction;
+    restriction.value = 50;
+    restriction.argument = "referrer_percent";
+    
+    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+}
+
+BOOST_AUTO_TEST_CASE( lt_restriction_fails_for_argument_greater_than_value)
+{
+    account_create_operation operation;
+    operation.referrer_percent = 60;
+    
+    lt_restriction restriction;
+    restriction.value = 50;
+    restriction.argument = "referrer_percent";
+    
+    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
