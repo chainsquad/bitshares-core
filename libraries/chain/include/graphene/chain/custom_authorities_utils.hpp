@@ -93,21 +93,21 @@ bool is_equal(const account_id_type& left, const account_id_type& right)
 }
 	
 template <typename T>
-const T& get(const generic_member& variant)
+const T& get(const generic_member& a_variant)
 {
 	FC_ASSERT(false);
 }
 
 template <>
-const asset& get<asset>(const generic_member& variant)
+const asset& get<asset>(const generic_member& a_variant)
 {
-	return variant.get<asset>();
+	return a_variant.get<asset>();
 }
 
 template <>
-const account_id_type& get<account_id_type>(const generic_member& variant)
+const account_id_type& get<account_id_type>(const generic_member& a_variant)
 {
-	return variant.get<account_id_type>();
+	return a_variant.get<account_id_type>();
 }
 	
 } } 
