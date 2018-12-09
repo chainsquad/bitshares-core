@@ -50,17 +50,15 @@ namespace  {
     }
 }
 
-bool custom_authority_object::validate(const operation& an_operation) const
-{
-    return validate(an_operation, time_point::now());
-}
-
-bool custom_authority_object::validate(const operation& an_operation, const time_point now) const
+void custom_authority_object::validate(const operation& an_operation, const time_point now) const
 {
     if (now < valid_from || valid_to < now)
     {
-        return false;
+        FC_THROW("Failed to validate the operation because now is not in valid period.");
     }
     
-    return get_operation_name(an_operation) == operation_name;
+    if (get_operation_name(an_operation) != operation_name)
+    {
+        FC_THROW("Failed to validate the operation because now is has the wrong type.");
+    }
 }

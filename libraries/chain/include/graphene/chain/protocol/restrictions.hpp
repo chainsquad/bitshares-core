@@ -34,18 +34,10 @@ struct base_restriction
    std::string argument;
    
    template <typename Operation>
-   bool validate( const Operation& op ) const
+   void validate( const Operation& op ) const
    {
-      try
-      {
-         member_visitor<Operation, Action> visitor(argument, Action(value), op);
-         fc::reflector<Operation>::visit(visitor);
-         return true;
-      }
-      catch (const fc::exception&)
-      {
-         return false;
-      }
+      member_visitor<Operation, Action> visitor(argument, Action(value), op);
+      fc::reflector<Operation>::visit(visitor);
    }
 };
 
@@ -56,18 +48,10 @@ struct base_list_restriction
    std::string argument;
    
    template <typename Operation>
-   bool validate( const Operation& op ) const
+   void validate( const Operation& op ) const
    {
-      try
-      {
-         member_visitor<Operation, Action> visitor(argument, Action(values), op);
-         fc::reflector<Operation>::visit(visitor);
-         return true;
-      }
-      catch (const fc::exception&)
-      {
-         return false;
-      }
+      member_visitor<Operation, Action> visitor(argument, Action(values), op);
+      fc::reflector<Operation>::visit(visitor);
    }
 };
 
