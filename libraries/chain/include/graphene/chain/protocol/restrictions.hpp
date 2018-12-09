@@ -65,7 +65,7 @@ public:
    template <class T>
    void operator () (const T& member) const
    {
-      FC_ASSERT(is_equal(get<T>(m_value), member));
+      FC_ASSERT(is_equal(get<T>(m_value), member), "Restriction value is not equal to member argument.");
    }
    
 private:
@@ -82,7 +82,7 @@ public:
    template <class T>
    void operator () (const T& member) const
    {
-      FC_ASSERT(!is_equal(get<T>(m_value), member));
+      FC_ASSERT(!is_equal(get<T>(m_value), member), "Restriction value is equal to member argument.");
    }
    
 private:
@@ -147,7 +147,7 @@ public:
    template <class T>
    void operator () (const T&) const
    {
-      FC_ASSERT("Not list type come.");
+      FC_THROW("Not list type come.");
    }
    
    template <class T>
@@ -161,7 +161,7 @@ public:
             contains |= (item == value.get<T>());
          }
          
-         FC_ASSERT(contains);
+         FC_ASSERT(contains, "Conatains all restriction value is not contained by member argument.");
       }
    }
    
@@ -179,7 +179,7 @@ public:
    template <class T>
    void operator () (const T&) const
    {
-      FC_ASSERT("Not list type come.");
+      FC_THROW("Not list type come.");
    }
    
    template <class T>

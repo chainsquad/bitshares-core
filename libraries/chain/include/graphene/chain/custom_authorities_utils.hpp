@@ -79,7 +79,7 @@ private:
 template <class T>
 bool is_equal(const T& left, const T& right)
 {
-	FC_ASSERT(false);
+    FC_THROW("Can't compare types. Type '${type_name}' don't support == operator.", ("type_name", fc::get_typename<T>::name()));
 }
 	
 bool is_equal(const asset& left, const asset& right)
@@ -95,7 +95,7 @@ bool is_equal(const account_id_type& left, const account_id_type& right)
 template <typename T>
 const T& get(const generic_member& a_variant)
 {
-	FC_ASSERT(false);
+    FC_THROW("Can't fetch value. Type '${type_name}' is not supported for now.", ("type_name", fc::get_typename<T>::name()));
 }
 
 template <>
