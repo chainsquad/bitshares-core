@@ -120,6 +120,23 @@ private:
     int64_t m_value;
 };
 
+class less_or_equal
+{
+public:
+    less_or_equal(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) <= m_value, "Argument is not less or equal than value.");
+    }
+    
+private:
+    int64_t m_value;
+};
+    
 class any_of
 {
 public:
@@ -232,13 +249,14 @@ private:
    std::vector<generic_member> m_values;
 };
 
-typedef base_restriction<equal>              eq_restriction;
-typedef base_restriction<not_equal>          neq_restriction;
-typedef base_comparision_restriction<less>   lt_restriction;
-typedef base_list_restriction<any_of>        any_restriction;
-typedef base_list_restriction<none_of>       none_restriction;
-typedef base_list_restriction<contains_all>  contains_all_restriction;
-typedef base_list_restriction<contains_none> contains_none_restriction;
+typedef base_restriction<equal>                     eq_restriction;
+typedef base_restriction<not_equal>                 neq_restriction;
+typedef base_comparision_restriction<less>          lt_restriction;
+typedef base_comparision_restriction<less_or_equal> le_restriction;
+typedef base_list_restriction<any_of>               any_restriction;
+typedef base_list_restriction<none_of>              none_restriction;
+typedef base_list_restriction<contains_all>         contains_all_restriction;
+typedef base_list_restriction<contains_none>        contains_none_restriction;
     
 typedef fc::static_variant<eq_restriction, neq_restriction, any_restriction, none_restriction, contains_all_restriction, contains_none_restriction> restriction_v2;
 
