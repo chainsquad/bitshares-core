@@ -32,37 +32,6 @@ namespace graphene { namespace chain {
 
 void_result custom_authority_create_evaluator::do_evaluate(const custom_authority_create_operation& op)
 { try {
-   const database& d = db();
-
-   // account is fee payer so should be valid
-
-   // custom_id should be unique per account
-
-   // valid_from ?
-   // valid_to should not be too far in the future
-
-   // operation_type HF check
-
-   // if there is an account in auth, need to be valid
-
-   // restrictions size check? global limitation?
-
-   // how many custom authorities per account?
-
-/*
-      asset                           fee;
-      account_id_type                 account;
-      uint32_t                        custom_id;
-      bool                            enabled;
-      time_point_sec                  valid_from;
-      time_point_sec                  valid_to;
-      unsigned_int                    operation_type;
-      authority                       auth;
-      vector<restriction>             restrictions;
-
-      empty_extensions_type           extensions;
-*/
-
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
@@ -86,22 +55,28 @@ object_id_type custom_authority_create_evaluator::do_apply(const custom_authorit
 
 void_result custom_authority_update_evaluator::do_evaluate(const custom_authority_update_operation& op)
 { try {
-   const database& d = db();
-
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
 void_result custom_authority_update_evaluator::do_apply(const custom_authority_update_operation& op)
 { try {
    database& d = db();
-
+   
+   d.modify( d.get<custom_authority_object>(op.custom_id), [&]( custom_authority_object& obj ){
+      obj.account        = op.account;
+      obj.enabled        = op.enabled;
+      obj.valid_from     = op.valid_from;
+      obj.valid_to       = op.valid_to;
+      obj.operation_name = op.operation_name;
+      obj.auth           = op.auth;
+      obj.restrictions   = op.restrictions;
+   });
+   
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
 void_result custom_authority_delete_evaluator::do_evaluate(const custom_authority_delete_operation& op)
 { try {
-   const database& d = db();
-
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
@@ -109,6 +84,8 @@ void_result custom_authority_delete_evaluator::do_apply(const custom_authority_d
 { try {
    database& d = db();
 
+   d.remove(d.get<custom_authority_object>(op.custom_id));
+   
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
