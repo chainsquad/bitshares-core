@@ -1174,7 +1174,72 @@ public:
       return create_account_with_private_key(owner_privkey, account_name, registrar_account, referrer_account, broadcast, save_wallet);
    } FC_CAPTURE_AND_RETHROW( (account_name)(registrar_account)(referrer_account) ) }
 
-
+   signed_transaction create_custom_authority(account_id_type account,
+                                              string operation_name,
+                                              time_point_sec valid_from,
+                                              time_point_sec valid_to,
+                                              vector<restriction_v2> restrictions)
+   { try {
+      FC_ASSERT( !self.is_locked() );
+      
+      custom_authority_create_operation op;
+      op.account = account;
+      op.enabled = true;
+      op.valid_from = valid_from;
+      op.valid_to = valid_to;
+      op.operation_name = operation_name;
+      op.restrictions = restrictions;
+      
+      signed_transaction tx;
+      tx.operations = {op};
+      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees );
+      tx.validate();
+      
+      return sign_transaction( tx, true );
+   } FC_CAPTURE_AND_RETHROW ( (account)(operation_name) ) }
+      
+   vector<custom_authority_object> list_custom_authorities(account_id_type account)
+   {try {
+      
+      return {};
+   } FC_CAPTURE_AND_RETHROW ( (account) ) }
+   
+   signed_transaction update_custom_authority(object_id_type auth,
+                                              string operation_name,
+                                              bool enabled,
+                                              time_point_sec valid_from,
+                                              time_point_sec valid_to,
+                                              vector<restriction_v2> restrictions)
+   {try {
+      custom_authority_update_operation op;
+      op.custom_id = auth;
+      op.enabled = enabled;
+      op.valid_from = valid_from;
+      op.valid_to = valid_to;
+      op.operation_name = operation_name;
+      op.restrictions = restrictions;
+      
+      signed_transaction tx;
+      tx.operations = {op};
+      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees );
+      tx.validate();
+      
+      return sign_transaction( tx, true );
+   } FC_CAPTURE_AND_RETHROW ( (auth)(operation_name) ) }
+   
+   signed_transaction delete_custom_authority(object_id_type auth)
+   {try {
+      custom_authority_delete_operation op;
+      op.custom_id = auth;
+      
+      signed_transaction tx;
+      tx.operations = {op};
+      set_operation_fees( tx, _remote_db->get_global_properties().parameters.current_fees );
+      tx.validate();
+      
+      return sign_transaction( tx, true );
+   } FC_CAPTURE_AND_RETHROW ( (auth) ) }
+   
    signed_transaction create_asset(string issuer,
                                    string symbol,
                                    uint8_t precision,
@@ -3438,12 +3503,12 @@ signed_transaction wallet_api::create_custom_authority(account_id_type account,
                                                        time_point_sec valid_to,
                                                        vector<restriction_v2> restrictions)
 {
-    return {};
+   return my->create_custom_authority(account, operation_name, valid_from, valid_to, restrictions);
 }
 
 vector<custom_authority_object> wallet_api::list_custom_authorities(account_id_type account)
 {
-    return {};
+   return my->list_custom_authorities(account);
 }
 
 signed_transaction wallet_api::update_custom_authority(object_id_type auth,
@@ -3453,12 +3518,12 @@ signed_transaction wallet_api::update_custom_authority(object_id_type auth,
                                                        time_point_sec valid_to,
                                                        vector<restriction_v2> restrictions)
 {
-    return {};
+   return my->update_custom_authority(auth, operation_name, enabled, valid_from, valid_to, restrictions);
 }
 
 signed_transaction wallet_api::delete_custom_authority(object_id_type auth)
 {
-    return {};
+   return my->delete_custom_authority(auth);
 }
     
 signed_transaction wallet_api::issue_asset(string to_account, string amount, string symbol,

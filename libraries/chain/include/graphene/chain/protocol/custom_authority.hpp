@@ -42,7 +42,6 @@ namespace graphene { namespace chain {
 
       asset                           fee; // TODO: defer fee to expiration / update / removal ?
       account_id_type                 account;
-      uint32_t                        custom_id;
       bool                            enabled;
       time_point_sec                  valid_from;
       time_point_sec                  valid_to;
@@ -69,10 +68,18 @@ namespace graphene { namespace chain {
          uint32_t price_per_k_unit = 100; ///< units = valid seconds * items in auth * items in restrictions
       };
 
-      asset             fee;
-      account_id_type   account;
-      uint64_t          delta_units; // to calculate fee, it will be validated in evaluator
-                                     // Note: if start was in the past, when updating, used fee should be deducted
+      asset                           fee; // TODO: defer fee to expiration / update / removal ?
+      account_id_type                 account;
+      object_id_type                  custom_id;
+      bool                            enabled;
+      time_point_sec                  valid_from;
+      time_point_sec                  valid_to;
+      std::string                     operation_name;
+      authority                       auth;
+      vector<restriction_v2>          restrictions;
+      
+      uint64_t                        delta_units; // to calculate fee, it will be validated in evaluator
+                                                   // Note: if start was in the past, when updating, used fee should be deducted
 
       account_id_type fee_payer()const { return account; }
       void            validate()const;
@@ -88,8 +95,10 @@ namespace graphene { namespace chain {
    {
       struct fee_parameters_type { uint64_t fee =  GRAPHENE_BLOCKCHAIN_PRECISION; };
 
-      asset             fee;
-      account_id_type   account;
+      asset                           fee; // TODO: defer fee to expiration / update / removal ?
+      
+      object_id_type custom_id;
+      account_id_type account;
 
       account_id_type fee_payer()const { return account; }
       void            validate()const;
@@ -104,7 +113,6 @@ FC_REFLECT( graphene::chain::custom_authority_delete_operation::fee_parameters_t
 FC_REFLECT( graphene::chain::custom_authority_create_operation,
             (fee)
             (account)
-            (custom_id)
             (enabled)
             (valid_from)
             (valid_to)
@@ -114,5 +122,5 @@ FC_REFLECT( graphene::chain::custom_authority_create_operation,
             (extensions)
           )
 
-FC_REFLECT( graphene::chain::custom_authority_update_operation, (fee)(account) )
-FC_REFLECT( graphene::chain::custom_authority_delete_operation, (fee)(account) )
+FC_REFLECT( graphene::chain::custom_authority_update_operation, (account) )
+FC_REFLECT( graphene::chain::custom_authority_delete_operation, (account) )

@@ -72,7 +72,6 @@ object_id_type custom_authority_create_evaluator::do_apply(const custom_authorit
 
    const auto& new_object = d.create<custom_authority_object>( [&op]( custom_authority_object& obj ){
       obj.account        = op.account;
-      obj.custom_id      = op.custom_id;
       obj.enabled        = op.enabled;
       obj.valid_from     = op.valid_from;
       obj.valid_to       = op.valid_to;
