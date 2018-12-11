@@ -3431,6 +3431,36 @@ signed_transaction wallet_api::create_account_with_brain_key(string brain_key, s
             referrer_account, broadcast
             );
 }
+    
+signed_transaction wallet_api::create_custom_authority(account_id_type account,
+                                                       string operation_name,
+                                                       time_point_sec valid_from,
+                                                       time_point_sec valid_to,
+                                                       vector<restriction_v2> restrictions)
+{
+    return {};
+}
+
+vector<custom_authority_object> wallet_api::list_custom_authorities(account_id_type account)
+{
+    return {};
+}
+
+signed_transaction wallet_api::update_custom_authority(object_id_type auth,
+                                                       string operation_name,
+                                                       bool enabled,
+                                                       time_point_sec valid_from,
+                                                       time_point_sec valid_to,
+                                                       vector<restriction_v2> restrictions)
+{
+    return {};
+}
+
+signed_transaction wallet_api::delete_custom_authority(object_id_type auth)
+{
+    return {};
+}
+    
 signed_transaction wallet_api::issue_asset(string to_account, string amount, string symbol,
                                            string memo, bool broadcast)
 {

@@ -25,6 +25,7 @@
 
 #include <graphene/app/api.hpp>
 #include <graphene/utilities/key_conversion.hpp>
+#include <graphene/chain/custom_authority_object.hpp>
 
 using namespace graphene::app;
 using namespace graphene::chain;
@@ -831,6 +832,24 @@ class wallet_api
                                                        string registrar_account,
                                                        string referrer_account,
                                                        bool broadcast = false);
+    
+      signed_transaction create_custom_authority(account_id_type account,
+                                                 string operation_name,
+                                                 time_point_sec valid_from,
+                                                 time_point_sec valid_to,
+                                                 vector<restriction_v2> restrictions);
+    
+      vector<custom_authority_object> list_custom_authorities(account_id_type account);
+    
+      signed_transaction update_custom_authority(object_id_type auth,
+                                                 string operation_name,
+                                                 bool enabled,
+                                                 time_point_sec valid_from,
+                                                 time_point_sec valid_to,
+                                                 vector<restriction_v2> restrictions);
+    
+      signed_transaction delete_custom_authority(object_id_type auth);
+    
 
       /** Transfer an amount from one account to another.
        * @param from the name or id of the account sending the funds
@@ -1766,6 +1785,10 @@ FC_API( graphene::wallet::wallet_api,
         (register_account)
         (upgrade_account)
         (create_account_with_brain_key)
+        (create_custom_authority)
+        (list_custom_authorities)
+        (update_custom_authority)
+        (delete_custom_authority)
         (sell_asset)
         (borrow_asset)
         (borrow_asset_ext)

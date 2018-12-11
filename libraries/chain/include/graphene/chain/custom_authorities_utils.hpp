@@ -99,13 +99,13 @@ const T& get(const generic_member& a_variant)
 }
 
 template <>
-const asset& get<asset>(const generic_member& a_variant)
+inline const asset& get<asset>(const generic_member& a_variant)
 {
 	return a_variant.get<asset>();
 }
 
 template <>
-const account_id_type& get<account_id_type>(const generic_member& a_variant)
+inline const account_id_type& get<account_id_type>(const generic_member& a_variant)
 {
 	return a_variant.get<account_id_type>();
 }
