@@ -82,12 +82,12 @@ bool is_equal(const T& left, const T& right)
 	FC_ASSERT(false);
 }
 	
-bool is_equal(const asset& left, const asset& right)
+inline bool is_equal(const asset& left, const asset& right)
 {
 	return left == right;
 }
 
-bool is_equal(const account_id_type& left, const account_id_type& right)
+inline bool is_equal(const account_id_type& left, const account_id_type& right)
 {
 	return left == right;
 }

@@ -24,6 +24,7 @@
 #pragma once
 #include <graphene/chain/protocol/base.hpp>
 #include <graphene/chain/protocol/restriction.hpp>
+#include <graphene/chain/protocol/restrictions.hpp>
 
 namespace graphene { namespace chain {
 
@@ -47,7 +48,7 @@ namespace graphene { namespace chain {
       time_point                      valid_to;
       std::string                     operation_name;
       authority                       auth;
-      vector<restriction>             restrictions;
+      vector<restriction_v2>          restrictions;
 
       empty_extensions_type           extensions;
 

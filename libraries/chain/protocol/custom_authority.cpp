@@ -38,7 +38,7 @@ share_type custom_authority_create_operation::calculate_fee( const fee_parameter
       uint64_t restriction_units = 0;
       for( const auto& r : restrictions )
       {
-         restriction_units += r.get_units();
+//         restriction_units += r.get_units();
       }
       unit_fee *= restriction_units;
       unit_fee /= 1000;

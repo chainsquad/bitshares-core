@@ -48,7 +48,7 @@ namespace graphene { namespace chain {
          time_point                      valid_to;
          std::string                     operation_name;
          authority                       auth;
-         vector<restriction>             restrictions;
+         vector<restriction_v2>          restrictions;
        
          bool validate(const operation& an_operation) const;
          bool validate(const operation& an_operation, const time_point now) const;
