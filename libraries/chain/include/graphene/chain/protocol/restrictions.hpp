@@ -34,18 +34,10 @@ struct base_restriction
    std::string argument;
    
    template <typename Operation>
-   bool validate( const Operation& op ) const
+   void validate( const Operation& op ) const
    {
-      try
-      {
-         member_visitor<Operation, Action> visitor(argument, Action(value), op);
-         fc::reflector<Operation>::visit(visitor);
-         return true;
-      }
-      catch (const fc::exception&)
-      {
-         return false;
-      }
+      member_visitor<Operation, Action> visitor(argument, Action(value), op);
+      fc::reflector<Operation>::visit(visitor);
    }
 };
 
@@ -56,19 +48,25 @@ struct base_list_restriction
    std::string argument;
    
    template <typename Operation>
-   bool validate( const Operation& op ) const
+   void validate( const Operation& op ) const
    {
-      try
-      {
-         member_visitor<Operation, Action> visitor(argument, Action(values), op);
-         fc::reflector<Operation>::visit(visitor);
-         return true;
-      }
-      catch (const fc::exception&)
-      {
-         return false;
-      }
+      member_visitor<Operation, Action> visitor(argument, Action(values), op);
+      fc::reflector<Operation>::visit(visitor);
    }
+};
+    
+template <typename Action>
+struct base_comparision_restriction
+{
+    int64_t value;
+    std::string argument;
+    
+    template <typename Operation>
+    void validate( const Operation& op ) const
+    {
+        member_visitor<Operation, Action> visitor(argument, Action(value), op);
+        fc::reflector<Operation>::visit(visitor);
+    }
 };
 
 class equal
@@ -81,7 +79,7 @@ public:
    template <class T>
    void operator () (const T& member) const
    {
-      FC_ASSERT(is_equal(get<T>(m_value), member));
+      FC_ASSERT(is_equal(get<T>(m_value), member), "Restriction value is not equal to member argument.");
    }
    
 private:
@@ -98,13 +96,81 @@ public:
    template <class T>
    void operator () (const T& member) const
    {
-      FC_ASSERT(!is_equal(get<T>(m_value), member));
+      FC_ASSERT(!is_equal(get<T>(m_value), member), "Restriction value is equal to member argument.");
    }
    
 private:
    generic_member m_value;
 };
+    
+class less
+{
+public:
+    less(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) < m_value, "Argument is not less than value.");
+    }
+    
+private:
+    int64_t m_value;
+};
 
+class less_or_equal
+{
+public:
+    less_or_equal(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) <= m_value, "Argument is not less or equal than value.");
+    }
+    
+private:
+    int64_t m_value;
+};
+
+class greater
+{
+public:
+    greater(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) > m_value, "Argument is not greater than value.");
+    }
+    
+private:
+    int64_t m_value;
+};
+    
+class greater_or_equal
+{
+public:
+    greater_or_equal(const int64_t value)
+    : m_value(value)
+    {}
+    
+    template <class T>
+    void operator () (const T& member) const
+    {
+        FC_ASSERT(to_integer(member) >= m_value, "Argument is not greater or equal than value.");
+    }
+    
+private:
+    int64_t m_value;
+};
+    
 class any_of
 {
 public:
@@ -163,7 +229,7 @@ public:
    template <class T>
    void operator () (const T&) const
    {
-      FC_ASSERT("Not list type come.");
+      FC_THROW("Not list type come.");
    }
    
    template <class T>
@@ -177,7 +243,7 @@ public:
             contains |= (item == value.get<T>());
          }
          
-         FC_ASSERT(contains);
+         FC_ASSERT(contains, "Conatains all restriction value is not contained by member argument.");
       }
    }
    
@@ -195,7 +261,7 @@ public:
    template <class T>
    void operator () (const T&) const
    {
-      FC_ASSERT("Not list type come.");
+      FC_THROW("Not list type come.");
    }
    
    template <class T>
@@ -217,12 +283,16 @@ private:
    std::vector<generic_member> m_values;
 };
 
-typedef base_restriction<equal>              eq_restriction;
-typedef base_restriction<not_equal>          neq_restriction;
-typedef base_list_restriction<any_of>        any_restriction;
-typedef base_list_restriction<none_of>       none_restriction;
-typedef base_list_restriction<contains_all>  contains_all_restriction;
-typedef base_list_restriction<contains_none> contains_none_restriction;
+typedef base_restriction<equal>                        eq_restriction;
+typedef base_restriction<not_equal>                    neq_restriction;
+typedef base_comparision_restriction<less>             lt_restriction;
+typedef base_comparision_restriction<less_or_equal>    le_restriction;
+typedef base_comparision_restriction<greater>          gt_restriction;
+typedef base_comparision_restriction<greater_or_equal> ge_restriction;
+typedef base_list_restriction<any_of>               any_restriction;
+typedef base_list_restriction<none_of>              none_restriction;
+typedef base_list_restriction<contains_all>         contains_all_restriction;
+typedef base_list_restriction<contains_none>        contains_none_restriction;
     
 typedef fc::static_variant<eq_restriction, neq_restriction, any_restriction, none_restriction, contains_all_restriction, contains_none_restriction> restriction_v2;
 

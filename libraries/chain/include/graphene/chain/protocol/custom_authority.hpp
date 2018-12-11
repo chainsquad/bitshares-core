@@ -44,8 +44,8 @@ namespace graphene { namespace chain {
       account_id_type                 account;
       uint32_t                        custom_id;
       bool                            enabled;
-      time_point                      valid_from;
-      time_point                      valid_to;
+      time_point_sec                  valid_from;
+      time_point_sec                  valid_to;
       std::string                     operation_name;
       authority                       auth;
       vector<restriction_v2>          restrictions;

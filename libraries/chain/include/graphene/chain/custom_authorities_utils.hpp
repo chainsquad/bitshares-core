@@ -79,7 +79,7 @@ private:
 template <class T>
 bool is_equal(const T& left, const T& right)
 {
-	FC_ASSERT(false);
+    FC_THROW("Can't compare types. Type '${type_name}' don't support == operator.", ("type_name", fc::get_typename<T>::name()));
 }
 	
 inline bool is_equal(const asset& left, const asset& right)
@@ -93,21 +93,53 @@ inline bool is_equal(const account_id_type& left, const account_id_type& right)
 }
 	
 template <typename T>
-const T& get(const generic_member& variant)
+const T& get(const generic_member& a_variant)
 {
-	FC_ASSERT(false);
+    FC_THROW("Can't fetch value. Type '${type_name}' is not supported for now.", ("type_name", fc::get_typename<T>::name()));
 }
 
 template <>
-const asset& get<asset>(const generic_member& variant)
+const asset& get<asset>(const generic_member& a_variant)
 {
-	return variant.get<asset>();
+	return a_variant.get<asset>();
 }
 
 template <>
-const account_id_type& get<account_id_type>(const generic_member& variant)
+const account_id_type& get<account_id_type>(const generic_member& a_variant)
 {
-	return variant.get<account_id_type>();
+	return a_variant.get<account_id_type>();
 }
-	
+    
+template <typename T>
+const T& to_integer(const generic_member& a_variant)
+{
+    FC_THROW("Can't fetch value. Type '${type_name}' is not supported for now.", ("type_name", fc::get_typename<T>::name()));
+}
+
+struct number_to_integer
+{
+    template <typename T>
+    static int64_t convert(const T& number)
+    {
+        return static_cast<int64_t>(number);
+    }
+};
+
+struct not_number_to_integer
+{
+    template <typename T>
+    static int64_t convert(const T& number)
+    {
+        FC_THROW("Can't conver type to integer.");
+    }
+};
+    
+template <typename T>
+int64_t to_integer(const T& value)
+{
+    return boost::mpl::if_<std::is_convertible<T, int64_t>,
+                            number_to_integer,
+                            not_number_to_integer>::type::convert(value);
+}
+    
 } } 
