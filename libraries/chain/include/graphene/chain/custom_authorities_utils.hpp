@@ -109,12 +109,6 @@ inline const account_id_type& get<account_id_type>(const generic_member& a_varia
 {
 	return a_variant.get<account_id_type>();
 }
-    
-template <typename T>
-const T& to_integer(const generic_member& a_variant)
-{
-    FC_THROW("Can't fetch value. Type '${type_name}' is not supported for now.", ("type_name", fc::get_typename<T>::name()));
-}
 
 struct number_to_integer
 {

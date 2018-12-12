@@ -95,7 +95,7 @@ namespace graphene { namespace chain {
    {
       struct fee_parameters_type { uint64_t fee =  GRAPHENE_BLOCKCHAIN_PRECISION; };
 
-      asset                           fee; // TODO: defer fee to expiration / update / removal ?
+      asset fee; // TODO: defer fee to expiration / update / removal ?
       
       object_id_type custom_id;
       account_id_type account;

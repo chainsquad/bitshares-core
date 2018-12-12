@@ -1199,7 +1199,7 @@ public:
    } FC_CAPTURE_AND_RETHROW ( (account)(operation_name) ) }
       
    vector<custom_authority_object> list_custom_authorities(account_id_type account)
-   {try {
+   { try {
       return _remote_db->get_custom_authorities_by_account(account);
    } FC_CAPTURE_AND_RETHROW ( (account) ) }
    
@@ -1209,7 +1209,7 @@ public:
                                               time_point_sec valid_from,
                                               time_point_sec valid_to,
                                               vector<restriction_v2> restrictions)
-   {try {
+   { try {
       custom_authority_update_operation op;
       op.custom_id = auth;
       op.enabled = enabled;
@@ -1227,7 +1227,7 @@ public:
    } FC_CAPTURE_AND_RETHROW ( (auth)(operation_name) ) }
    
    signed_transaction delete_custom_authority(object_id_type auth)
-   {try {
+   { try {
       custom_authority_delete_operation op;
       op.custom_id = auth;
       
