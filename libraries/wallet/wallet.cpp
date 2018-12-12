@@ -1200,8 +1200,7 @@ public:
       
    vector<custom_authority_object> list_custom_authorities(account_id_type account)
    {try {
-      
-      return {};
+      return _remote_db->get_custom_authorities_by_account(account);
    } FC_CAPTURE_AND_RETHROW ( (account) ) }
    
    signed_transaction update_custom_authority(object_id_type auth,

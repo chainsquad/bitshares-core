@@ -54,6 +54,7 @@ namespace graphene { namespace chain {
    };
 
    struct by_account_custom;
+   struct by_account;
 
    /**
     * @ingroup object_index
@@ -62,6 +63,7 @@ namespace graphene { namespace chain {
       custom_authority_object,
       indexed_by<
          ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
+         ordered_non_unique< tag<by_account>, member< custom_authority_object, account_id_type, &custom_authority_object::account > >,
          ordered_unique< tag<by_account_custom>,
             composite_key<
                custom_authority_object,
