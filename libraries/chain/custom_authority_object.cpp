@@ -28,37 +28,37 @@
 using namespace graphene::chain;
 
 namespace  {
-    struct type_name_visitor
-    {
-        typedef void result_type;
-        
-        template <class T>
-        void operator () (const T&)
-        {
-            type_name = fc::get_typename<T>::name();
-        }
-        
-        std::string type_name;
-    };
-    
-    std::string get_operation_name(const operation& an_operation)
-    {
-        type_name_visitor type_name_retriver;
-        an_operation.visit(type_name_retriver);
-        
-        return type_name_retriver.type_name;
-    }
+   struct type_name_visitor
+   {
+      typedef void result_type;
+      
+      template <class T>
+      void operator () (const T&)
+      {
+         type_name = fc::get_typename<T>::name();
+      }
+      
+      std::string type_name;
+   };
+   
+   std::string get_operation_name(const operation& an_operation)
+   {
+      type_name_visitor type_name_retriver;
+      an_operation.visit(type_name_retriver);
+      
+      return type_name_retriver.type_name;
+   }
 }
 
 void custom_authority_object::validate(const operation& an_operation, const time_point_sec now) const
 {
-    if (now < valid_from || valid_to < now)
-    {
-        FC_THROW("Failed to validate the operation because now is not in valid period.");
-    }
-    
-    if (get_operation_name(an_operation) != operation_name)
-    {
-        FC_THROW("Failed to validate the operation because now is has the wrong type.");
-    }
+   if (now < valid_from || valid_to < now)
+   {
+      FC_THROW("Failed to validate the operation because now is not in valid period.");
+   }
+   
+   if (get_operation_name(an_operation) != operation_name)
+   {
+      FC_THROW("Failed to validate the operation because now is has the wrong type.");
+   }
 }
