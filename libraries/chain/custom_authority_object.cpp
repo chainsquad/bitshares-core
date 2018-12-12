@@ -33,7 +33,7 @@ namespace  {
       typedef void result_type;
       
       template <class T>
-      void operator () (const T&)
+      void operator () ( const T& )
       {
          type_name = fc::get_typename<T>::name();
       }
@@ -41,24 +41,66 @@ namespace  {
       std::string type_name;
    };
    
-   std::string get_operation_name(const operation& an_operation)
+   template <typename Operation>
+   struct specific_operation_validation_visitor
+   {
+      Operation op;
+      typedef void result_type;
+      
+      template <class Restriction>
+      void operator () ( const Restriction& rest )
+      {
+         rest.validate(op);
+      }
+   };
+   
+   struct operation_validation_visitor
+   {
+      restriction_v2 rest;
+      
+      typedef void result_type;
+      
+      template <class Operation>
+      void operator () ( const Operation& op )
+      {
+         specific_operation_validation_visitor<Operation> visitor;
+         visitor.op = op;
+
+         rest.visit(visitor);
+      }
+   };
+   
+   std::string get_operation_name( const operation& an_operation )
    {
       type_name_visitor type_name_retriver;
       an_operation.visit(type_name_retriver);
       
       return type_name_retriver.type_name;
    }
+   
+   void validate_operation_by_restriction( const operation& op, const restriction_v2& rest )
+   {
+      operation_validation_visitor operation_validator;
+      operation_validator.rest = rest;
+      
+      op.visit(operation_validator);
+   }
 }
 
-void custom_authority_object::validate(const operation& an_operation, const time_point_sec now) const
+void custom_authority_object::validate( const operation& op, const time_point_sec now ) const
 {
    if (now < valid_from || valid_to < now)
    {
       FC_THROW("Failed to validate the operation because now is not in valid period.");
    }
    
-   if (get_operation_name(an_operation) != operation_name)
+   if (get_operation_name(op) != operation_name)
    {
       FC_THROW("Failed to validate the operation because now is has the wrong type.");
+   }
+   
+   for (auto& rest: restrictions)
+   {
+      validate_operation_by_restriction(op, rest);
    }
 }

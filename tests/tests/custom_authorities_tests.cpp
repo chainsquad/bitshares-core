@@ -86,6 +86,87 @@ BOOST_AUTO_TEST_CASE( validation_passes_when_now_is_in_valid_period )
    BOOST_CHECK_NO_THROW(auth.validate(transfer_operation(), time_point_sec(4)));
 }
 
+BOOST_AUTO_TEST_CASE( validation_passes_when_no_restrictions_for_operation_arguments )
+{
+   custom_authority_object auth;
+   
+   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.valid_from = time_point_sec(3);
+   auth.valid_to = time_point_sec(5);
+   
+   auth.restrictions = {};
+   
+   BOOST_CHECK_NO_THROW(auth.validate(transfer_operation(), time_point_sec(4)));
+}
+
+BOOST_AUTO_TEST_CASE( validation_passes_when_one_restriction_passes_for_operation_arguments )
+{
+   custom_authority_object auth;
+   
+   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.valid_from = time_point_sec(3);
+   auth.valid_to = time_point_sec(5);
+   
+   eq_restriction rest;
+   rest.value = asset(5);
+   rest.argument = "amount";
+   
+   auth.restrictions = {rest};
+   
+   transfer_operation op;
+   op.amount = asset(5);
+   
+   BOOST_CHECK_NO_THROW(auth.validate(op, time_point_sec(4)));
+}
+
+BOOST_AUTO_TEST_CASE( validation_passes_when_several_restriction_passes_for_operation_arguments )
+{
+   custom_authority_object auth;
+   
+   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.valid_from = time_point_sec(3);
+   auth.valid_to = time_point_sec(5);
+   
+   eq_restriction rest1;
+   rest1.value = asset(5);
+   rest1.argument = "amount";
+   
+   neq_restriction rest2;
+   rest2.value = asset(6);
+   rest2.argument = "amount";
+   
+   auth.restrictions = {rest1, rest2};
+   
+   transfer_operation op;
+   op.amount = asset(5);
+   
+   BOOST_CHECK_NO_THROW(auth.validate(op, time_point_sec(4)));
+}
+
+BOOST_AUTO_TEST_CASE( validation_fails_when_one_restriction_fails_for_operation_arguments )
+{
+   custom_authority_object auth;
+   
+   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.valid_from = time_point_sec(3);
+   auth.valid_to = time_point_sec(5);
+   
+   eq_restriction rest1;
+   rest1.value = asset(5);
+   rest1.argument = "amount";
+   
+   eq_restriction rest2;
+   rest2.value = asset(6);
+   rest2.argument = "amount";
+   
+   auth.restrictions = {rest1, rest2};
+   
+   transfer_operation op;
+   op.amount = asset(5);
+   
+   BOOST_CHECK_THROW(auth.validate(op, time_point_sec(4)), fc::exception);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( custom_authority_restrictions )
