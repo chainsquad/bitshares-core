@@ -575,3 +575,35 @@ BOOST_AUTO_TEST_CASE( ge_restriction_passes_for_argument_greater_than_value)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( custom_authority_utils )
+
+BOOST_AUTO_TEST_CASE( to_integer_number_to_int )
+{
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(4), to_integer<int>(4));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(4), to_integer<int8_t>(4));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(4), to_integer<int16_t>(4));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(4), to_integer<int32_t>(4));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(4), to_integer<int64_t>(4));
+}
+
+BOOST_AUTO_TEST_CASE( to_integer_string_to_int )
+{
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(0), to_integer<std::string>(""));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(1), to_integer<std::string>("1"));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(2), to_integer<std::string>("22"));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(3), to_integer<std::string>("333"));
+}
+
+BOOST_AUTO_TEST_CASE( to_integer_object_to_int )
+{
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(9), to_integer<asset>(asset(5)));
+}
+
+BOOST_AUTO_TEST_CASE( to_integer_custom_type_to_int_throws_exception )
+{
+   struct dummy {};
+   BOOST_CHECK_THROW(to_integer<dummy>(dummy()), fc::exception);
+}
+
+BOOST_AUTO_TEST_SUITE_END()

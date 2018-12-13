@@ -119,6 +119,24 @@ struct number_to_integer
    }
 };
 
+struct string_to_integer
+{
+   static int64_t convert(const string& str)
+   {
+      return static_cast<int64_t>(str.size());
+   }
+};
+
+struct object_to_integer
+{
+   template <typename T>
+   static int64_t convert(const T& object)
+   {
+      auto buffer = fc::raw::pack( object );
+      return buffer.size();
+   }
+};
+   
 struct not_number_to_integer
 {
    template <typename T>
@@ -129,11 +147,27 @@ struct not_number_to_integer
 };
 
 template <typename T>
+struct is_fc_reflected_object
+{
+   static const bool value = fc::reflector<T>::is_defined::value;
+};
+   
+template <typename T>
 int64_t to_integer(const T& value)
 {
    return boost::mpl::if_<std::is_convertible<T, int64_t>,
-   number_to_integer,
-   not_number_to_integer>::type::convert(value);
+                          number_to_integer,
+                          typename boost::mpl::if_<is_fc_reflected_object<T>,
+                                                   object_to_integer,
+                                                   not_number_to_integer
+                                                  >::type
+                         >::type::convert(value);
+}
+ 
+template <>
+inline int64_t to_integer<std::string>(const std::string& value)
+{
+   return static_cast<int64_t>(value.size());
 }
 
 template <typename T>
