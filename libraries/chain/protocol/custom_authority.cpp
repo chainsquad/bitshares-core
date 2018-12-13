@@ -26,6 +26,19 @@
 
 namespace graphene { namespace chain {
 
+namespace {
+   struct restriction_validator_visitor
+   {
+      typedef void result_type;
+      
+      template <typename Restriction>
+      void operator () (const Restriction& rest) const
+      {
+         rest.template validate<assert_operation>();
+      }
+   };
+}
+   
 share_type custom_authority_create_operation::calculate_fee( const fee_parameters_type& k )const
 {
    share_type core_fee_required = k.basic_fee;
@@ -59,12 +72,13 @@ void custom_authority_create_operation::validate()const
               "Can not create custom authority for special accounts" );
 
    FC_ASSERT( valid_from < valid_to, "valid_from must be earlier than valid_to" );
-
-   // Note: allow auths to be empty
-   //FC_ASSERT( auth.num_auths() > 0, "Can not set empty auth" );
    FC_ASSERT( auth.address_auths.size() == 0, "Address auth is not supported" );
-   // Note: allow auths to be impossible
-   //FC_ASSERT( !auth.is_impossible(), "cannot use an imposible authority threshold" );
+   
+   for( const auto& r : restrictions )
+   {
+      restriction_validator_visitor visitor;
+      r.visit(visitor);
+   }
 }
 
 share_type custom_authority_update_operation::calculate_fee( const fee_parameters_type& k )const
