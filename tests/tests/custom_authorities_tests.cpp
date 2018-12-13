@@ -30,25 +30,9 @@
 #include <graphene/chain/account_object.hpp>
 #include <graphene/chain/custom_authorities_utils.hpp>
 
+#include <iostream>
+
 using namespace graphene::chain;
-
-struct is_type_supported_by_base_restriction
-{
-    template <class T>
-    void operator () (const T& member) const
-    {
-        generic_member dummy;
-        get<T>(dummy); //should throw on not supported type
-        is_equal(member, member); //should throw on not supported type
-    }
-};
-
-template <typename Operation>
-void validate(const eq_restriction& rest)
-{
-    member_visitor<Operation, is_type_supported_by_base_restriction> visitor(rest.argument, is_type_supported_by_base_restriction(), Operation());
-    fc::reflector<Operation>::visit(visitor);
-}
 
 BOOST_AUTO_TEST_SUITE( custom_authority )
 
@@ -187,19 +171,43 @@ BOOST_AUTO_TEST_CASE( validation_fails_when_one_restriction_fails_for_operation_
 
 BOOST_AUTO_TEST_CASE( validate_eq_restriction_correctness_fails_when_argument_is_extensions_type )
 {
-    eq_restriction rest;
-    rest.argument = "extensions";
-    
-    BOOST_CHECK_THROW(validate<assert_operation>(rest), fc::exception);
+   eq_restriction rest;
+   rest.argument = "extensions";
+   
+   BOOST_CHECK_THROW(rest.validate<assert_operation>(), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( validate_eq_restriction_correctness_passes_when_argument_is_asset )
 {
-    eq_restriction rest;
-    rest.value = asset(5);
-    rest.argument = "amount";
-    
-    BOOST_CHECK_NO_THROW(validate<transfer_operation>(rest));
+   eq_restriction rest;
+   rest.value = asset(5);
+   rest.argument = "amount";
+   
+   BOOST_CHECK_NO_THROW(rest.validate<transfer_operation>());
+}
+
+BOOST_AUTO_TEST_CASE( validate_contains_all_restriction_correctness_passes_when_argument_is_list )
+{
+   contains_all_restriction rest;
+   rest.argument = "required_auths";
+   
+   BOOST_CHECK_NO_THROW(rest.validate<assert_operation>());
+}
+
+BOOST_AUTO_TEST_CASE( validate_contains_all_restriction_correctness_fails_when_argument_is_not_list )
+{
+   contains_all_restriction rest;
+   rest.argument = "amount";
+   
+   BOOST_CHECK_THROW(rest.validate<transfer_operation>(), fc::exception);
+}
+
+BOOST_AUTO_TEST_CASE( validate_contains_all_restriction_correctness_fails_when_argument_is_list_of_not_supported_values )
+{
+   contains_all_restriction rest;
+   rest.argument = "predicates";
+   
+   BOOST_CHECK_THROW(rest.validate<assert_operation>(), fc::exception);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -347,7 +355,7 @@ BOOST_AUTO_TEST_CASE( validation_fails_for_none_restriction_when_argument_value_
    restriction.values = {asset(1), asset(2), asset(3)};
    restriction.argument = "amount";
    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( validation_passes_for_conatins_all_restriction_when_argument_contains_list_values)
@@ -407,7 +415,7 @@ BOOST_AUTO_TEST_CASE( validation_fails_for_contains_none_restriction_when_argume
    restriction.values = {account_id_type(1)};
    restriction.argument = "required_auths";
    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( validation_fails_for_contains_none_restriction_when_argument_contained_several_of_list_values)
@@ -419,151 +427,151 @@ BOOST_AUTO_TEST_CASE( validation_fails_for_contains_none_restriction_when_argume
    restriction.values = {account_id_type(1), account_id_type(2)};
    restriction.argument = "required_auths";
    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( lt_restriction_passes_for_argument_less_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    lt_restriction restriction;
-    restriction.value = 60;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_NO_THROW(restriction.validate(operation));
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   lt_restriction restriction;
+   restriction.value = 60;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
 }
 
 BOOST_AUTO_TEST_CASE( lt_restriction_fails_for_argument_equals_to_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    lt_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   lt_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( lt_restriction_fails_for_argument_greater_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 60;
-    
-    lt_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   account_create_operation operation;
+   operation.referrer_percent = 60;
+   
+   lt_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( le_restriction_passes_for_argument_less_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    le_restriction restriction;
-    restriction.value = 60;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_NO_THROW(restriction.validate(operation));
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   le_restriction restriction;
+   restriction.value = 60;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
 }
 
 BOOST_AUTO_TEST_CASE( le_restriction_passes_for_argument_equals_to_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    le_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_NO_THROW(restriction.validate(operation));
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   le_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
 }
 
 BOOST_AUTO_TEST_CASE( le_restriction_fails_for_argument_greater_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 60;
-    
-    le_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   account_create_operation operation;
+   operation.referrer_percent = 60;
+   
+   le_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( gt_restriction_fails_for_argument_less_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    gt_restriction restriction;
-    restriction.value = 60;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   gt_restriction restriction;
+   restriction.value = 60;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( gt_restriction_fails_for_argument_equals_to_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    gt_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   gt_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( gt_restriction_passes_for_argument_greater_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 60;
-    
-    gt_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_NO_THROW(restriction.validate(operation));
+   account_create_operation operation;
+   operation.referrer_percent = 60;
+   
+   gt_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
 }
 
 BOOST_AUTO_TEST_CASE( ge_restriction_fails_for_argument_less_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    ge_restriction restriction;
-    restriction.value = 60;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   ge_restriction restriction;
+   restriction.value = 60;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( ge_restriction_passes_for_argument_equals_to_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 50;
-    
-    ge_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_NO_THROW(restriction.validate(operation));
+   account_create_operation operation;
+   operation.referrer_percent = 50;
+   
+   ge_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
 }
 
 BOOST_AUTO_TEST_CASE( ge_restriction_passes_for_argument_greater_than_value)
 {
-    account_create_operation operation;
-    operation.referrer_percent = 60;
-    
-    ge_restriction restriction;
-    restriction.value = 50;
-    restriction.argument = "referrer_percent";
-    
-    BOOST_CHECK_NO_THROW(restriction.validate(operation));
+   account_create_operation operation;
+   operation.referrer_percent = 60;
+   
+   ge_restriction restriction;
+   restriction.value = 50;
+   restriction.argument = "referrer_percent";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

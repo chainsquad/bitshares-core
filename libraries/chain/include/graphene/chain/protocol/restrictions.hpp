@@ -27,6 +27,30 @@
 
 namespace graphene { namespace chain {
    
+struct is_type_supported_by_base_restriction
+{
+   template <class T>
+   void operator () (const T& member) const
+   {
+      is_type_supported_by_restriction<T>();
+   }
+};
+
+struct is_type_supported_by_base_list_restriction
+{
+   template <class T>
+   void operator () (const T&) const
+   {
+      FC_THROW("List restriction argument is not a list.");
+   }
+   
+   template <class T>
+   void operator () (const flat_set<T>&) const
+   {
+      is_type_supported_by_restriction<T>();
+   }
+};
+   
 template <typename Action>
 struct base_restriction
 {
@@ -37,6 +61,13 @@ struct base_restriction
    void validate( const Operation& op ) const
    {
       member_visitor<Operation, Action> visitor(argument, Action(value), op);
+      fc::reflector<Operation>::visit(visitor);
+   }
+   
+   template <typename Operation>
+   void validate()
+   {
+      member_visitor<Operation, is_type_supported_by_base_restriction> visitor(argument, is_type_supported_by_base_restriction(), Operation());
       fc::reflector<Operation>::visit(visitor);
    }
 };
@@ -53,20 +84,31 @@ struct base_list_restriction
       member_visitor<Operation, Action> visitor(argument, Action(values), op);
       fc::reflector<Operation>::visit(visitor);
    }
+   
+   template <typename Operation>
+   void validate()
+   {
+      member_visitor<Operation, is_type_supported_by_base_list_restriction> visitor(argument, is_type_supported_by_base_list_restriction(), Operation());
+      fc::reflector<Operation>::visit(visitor);
+   }
 };
     
 template <typename Action>
 struct base_comparision_restriction
 {
-    int64_t value;
-    std::string argument;
-    
-    template <typename Operation>
-    void validate( const Operation& op ) const
-    {
-        member_visitor<Operation, Action> visitor(argument, Action(value), op);
-        fc::reflector<Operation>::visit(visitor);
-    }
+   int64_t value;
+   std::string argument;
+   
+   template <typename Operation>
+   void validate( const Operation& op ) const
+   {
+      member_visitor<Operation, Action> visitor(argument, Action(value), op);
+      fc::reflector<Operation>::visit(visitor);
+   }
+   
+   template <typename Operation>
+   void validate() // should support all arguments
+   {}
 };
 
 class equal
