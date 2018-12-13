@@ -32,6 +32,24 @@
 
 using namespace graphene::chain;
 
+struct is_type_supported_by_base_restriction
+{
+    template <class T>
+    void operator () (const T& member) const
+    {
+        generic_member dummy;
+        get<T>(dummy); //should throw on not supported type
+        is_equal(member, member); //should throw on not supported type
+    }
+};
+
+template <typename Operation>
+void validate(const eq_restriction& rest)
+{
+    member_visitor<Operation, is_type_supported_by_base_restriction> visitor(rest.argument, is_type_supported_by_base_restriction(), Operation());
+    fc::reflector<Operation>::visit(visitor);
+}
+
 BOOST_AUTO_TEST_SUITE( custom_authority )
 
 BOOST_AUTO_TEST_CASE( validation_for_correct_operation_name_is_passed )
@@ -165,6 +183,23 @@ BOOST_AUTO_TEST_CASE( validation_fails_when_one_restriction_fails_for_operation_
    op.amount = asset(5);
    
    BOOST_CHECK_THROW(auth.validate(op, time_point_sec(4)), fc::exception);
+}
+
+BOOST_AUTO_TEST_CASE( validate_eq_restriction_correctness_fails_when_argument_is_extensions_type )
+{
+    eq_restriction rest;
+    rest.argument = "extensions";
+    
+    BOOST_CHECK_THROW(validate<assert_operation>(rest), fc::exception);
+}
+
+BOOST_AUTO_TEST_CASE( validate_eq_restriction_correctness_passes_when_argument_is_asset )
+{
+    eq_restriction rest;
+    rest.value = asset(5);
+    rest.argument = "amount";
+    
+    BOOST_CHECK_NO_THROW(validate<transfer_operation>(rest));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
