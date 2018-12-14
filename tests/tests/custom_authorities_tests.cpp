@@ -595,6 +595,17 @@ BOOST_AUTO_TEST_CASE( to_integer_string_to_int )
    BOOST_CHECK_EQUAL(static_cast<int64_t>(3), to_integer<std::string>("333"));
 }
 
+BOOST_AUTO_TEST_CASE( to_integer_list_like_object_to_int )
+{
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(2), to_integer(vector<int>{1, 2}));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(3), to_integer(deque<int>{1, 2, 3}));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(4), to_integer(set<int>{1, 2, 3, 4}));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(4), to_integer(flat_set<int>{1, 2, 3, 4}));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(2), to_integer(map<int, int>{{1, 2}, {3, 4}}));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(2), to_integer(flat_map<int, int>{{1, 2}, {3, 4}}));
+   BOOST_CHECK_EQUAL(static_cast<int64_t>(2), to_integer(unordered_map<int, int>{{1, 2}, {3, 4}}));
+}
+
 BOOST_AUTO_TEST_CASE( to_integer_object_to_int )
 {
    BOOST_CHECK_EQUAL(static_cast<int64_t>(9), to_integer<asset>(asset(5)));

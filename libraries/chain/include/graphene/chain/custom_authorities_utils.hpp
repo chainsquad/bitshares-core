@@ -119,14 +119,6 @@ struct number_to_integer
    }
 };
 
-struct string_to_integer
-{
-   static int64_t convert(const string& str)
-   {
-      return static_cast<int64_t>(str.size());
-   }
-};
-
 struct object_to_integer
 {
    template <typename T>
@@ -166,6 +158,48 @@ int64_t to_integer(const T& value)
  
 template <>
 inline int64_t to_integer<std::string>(const std::string& value)
+{
+   return static_cast<int64_t>(value.size());
+}
+   
+template <typename T>
+inline int64_t to_integer(const vector<T>& value)
+{
+   return static_cast<int64_t>(value.size());
+}
+
+template <typename T>
+inline int64_t to_integer(const deque<T>& value)
+{
+   return static_cast<int64_t>(value.size());
+}
+
+template <typename T>
+inline int64_t to_integer(const set<T>& value)
+{
+   return static_cast<int64_t>(value.size());
+}
+
+template <typename T>
+inline int64_t to_integer(const flat_set<T>& value)
+{
+   return static_cast<int64_t>(value.size());
+}
+
+template <typename K, typename T>
+inline int64_t to_integer(const map<K, T>& value)
+{
+   return static_cast<int64_t>(value.size());
+}
+
+template <typename K, typename T>
+inline int64_t to_integer(const flat_map<K, T>& value)
+{
+   return static_cast<int64_t>(value.size());
+}
+
+template <typename K, typename T>
+inline int64_t to_integer(const unordered_map<K, T>& value)
 {
    return static_cast<int64_t>(value.size());
 }
