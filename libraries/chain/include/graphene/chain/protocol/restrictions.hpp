@@ -107,7 +107,7 @@ struct base_comparision_restriction
    }
    
    template <typename Operation>
-   void validate() const // should support all arguments
+   void validate() const // should support all arguments of all operations
    {}
 };
 
