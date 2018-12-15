@@ -29,29 +29,9 @@
 #include <graphene/chain/protocol/operations.hpp>
 #include <graphene/chain/account_object.hpp>
 #include <graphene/chain/custom_authorities_utils.hpp>
-
-#include <boost/preprocessor/variadic/to_seq.hpp>
-#include <boost/preprocessor/seq/for_each_i.hpp>
+#include <graphene/chain/operation_type_to_id.hpp>
 
 using namespace graphene::chain;
-
-template <typename OperationType>
-struct operation_type_id_from_operation_type
-{
-   static const int value = -1;
-};
-
-#define GRAPHENE_GENERATE_OP_TYPE_TO_ID_MAPPER(r, data, i, elem) \
-template <> \
-struct operation_type_id_from_operation_type<elem> \
-{ \
-   static const int value = i; \
-}; \
-\
-const int operation_type_id_from_operation_type<elem>::value; \
-
-
-BOOST_PP_SEQ_FOR_EACH_I( GRAPHENE_GENERATE_OP_TYPE_TO_ID_MAPPER, , BOOST_PP_VARIADIC_TO_SEQ( GRAPHENE_OPERATIONS_VARIADIC ) )
 
 BOOST_AUTO_TEST_SUITE( custom_authority )
 
@@ -651,20 +631,6 @@ struct operation_type_checker
       BOOST_CHECK((std::is_same<Operation, T>::value));
    }
 };
-
-template <typename Action>
-void operation_type_from_operation_id(const int operation_type_id, const Action& action)
-{
-#define GRAPHENE_GENERATE_OP_ID_TO_TYPE_MAPPER(r, data, i, elem) \
-case i: \
-   action.template operator()<elem>(); \
-   break;
-   
-   switch (operation_type_id)
-   {
-      BOOST_PP_SEQ_FOR_EACH_I( GRAPHENE_GENERATE_OP_ID_TO_TYPE_MAPPER, , BOOST_PP_VARIADIC_TO_SEQ( GRAPHENE_OPERATIONS_VARIADIC ) )
-   }
-}
 
 BOOST_AUTO_TEST_CASE( operation_type_mapped_from_operation_id )
 {

@@ -212,5 +212,5 @@ void is_type_supported_by_restriction()
 
 template <> inline void is_type_supported_by_restriction<asset>() {}
 template <> inline void is_type_supported_by_restriction<account_id_type>() {}
-   
+
 } } 
