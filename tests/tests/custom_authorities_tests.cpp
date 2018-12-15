@@ -638,10 +638,4 @@ BOOST_AUTO_TEST_CASE( operation_type_mapped_from_operation_id )
    operation_type_from_operation_id(5, operation_type_checker<account_create_operation>());
 }
 
-//BOOST_AUTO_TEST_CASE( operation_id_is_mapped_to_type )
-//{
-//   struct dummy {};
-//   BOOST_CHECK_THROW(to_integer<dummy>(dummy()), fc::exception);
-//}
-
 BOOST_AUTO_TEST_SUITE_END()
