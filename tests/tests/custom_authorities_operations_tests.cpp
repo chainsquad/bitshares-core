@@ -48,6 +48,7 @@ namespace {
       
       return result;
    }
+   
 }
 
 BOOST_FIXTURE_TEST_SUITE( custom_authorities_operations, database_fixture )
@@ -59,6 +60,40 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities) {
       generate_block();
       
       BOOST_CHECK(get_custom_authorities_by_account(db, dan.id).empty());
+   } catch (fc::exception &e) {
+      edump((e.to_detail_string()));
+      throw;
+   }
+}
+
+BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities_but_with_authorities_for_another_account) {
+   try {
+      auto dan = create_account("dan");
+      auto sam = create_account("sam");
+      
+      generate_block();
+      fc::usleep(fc::milliseconds(2000));
+      
+      custom_authority_create_operation op;
+      op.account = sam.id;
+      op.enabled = true;
+      op.valid_from = time_point_sec(1);
+      op.valid_to = time_point_sec(2);
+      op.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
+      
+      eq_restriction rest;
+      rest.argument = "amount";
+      rest.value = asset(100);
+      
+      op.restrictions = {rest};
+      
+      trx.operations.push_back(op);
+      trx.validate();
+      processed_transaction ptx = db.push_transaction(trx, ~0);
+      trx.operations.clear();
+      
+      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      BOOST_REQUIRE_EQUAL(0, authorities.size());
    } catch (fc::exception &e) {
       edump((e.to_detail_string()));
       throw;
@@ -103,6 +138,53 @@ BOOST_AUTO_TEST_CASE(create_custom_authority_operation_) {
       auto restriction = authorities.front().restrictions.front().get<eq_restriction>();
       BOOST_CHECK_EQUAL("amount", restriction.argument);
       BOOST_CHECK(asset(100) == restriction.value.get<asset>());
+      
+   } catch (fc::exception &e) {
+      edump((e.to_detail_string()));
+      throw;
+   }
+}
+
+BOOST_AUTO_TEST_CASE(delete_custom_authority) {
+   try {
+      auto dan = create_account("dan");
+      
+      generate_block();
+      fc::usleep(fc::milliseconds(2000));
+      
+      custom_authority_create_operation op;
+      op.account = dan.id;
+      op.enabled = true;
+      op.valid_from = time_point_sec(1);
+      op.valid_to = time_point_sec(2);
+      op.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
+      
+      eq_restriction rest;
+      rest.argument = "amount";
+      rest.value = asset(100);
+      
+      op.restrictions = {rest};
+      
+      trx.operations.push_back(op);
+      trx.validate();
+      processed_transaction ptx = db.push_transaction(trx, ~0);
+      trx.operations.clear();
+      
+      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      BOOST_REQUIRE_EQUAL(1, authorities.size());
+      
+      {
+         custom_authority_delete_operation op;
+         op.custom_id = authorities.front().id;
+         
+         trx.operations.push_back(op);
+         trx.validate();
+         processed_transaction ptx = db.push_transaction(trx, ~0);
+         trx.operations.clear();
+      }
+      
+      authorities = get_custom_authorities_by_account(db, dan.id);
+      BOOST_REQUIRE_EQUAL(0, authorities.size());
       
    } catch (fc::exception &e) {
       edump((e.to_detail_string()));
