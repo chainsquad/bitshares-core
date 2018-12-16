@@ -44,7 +44,7 @@ object_id_type custom_authority_create_evaluator::do_apply(const custom_authorit
       obj.enabled        = op.enabled;
       obj.valid_from     = op.valid_from;
       obj.valid_to       = op.valid_to;
-      obj.operation_name = op.operation_name;
+      obj.operation_type = op.operation_type;
       obj.auth           = op.auth;
       obj.restrictions   = op.restrictions;
    });
@@ -67,7 +67,7 @@ void_result custom_authority_update_evaluator::do_apply(const custom_authority_u
       obj.enabled        = op.enabled;
       obj.valid_from     = op.valid_from;
       obj.valid_to       = op.valid_to;
-      obj.operation_name = op.operation_name;
+      obj.operation_type = op.operation_type;
       obj.auth           = op.auth;
       obj.restrictions   = op.restrictions;
    });

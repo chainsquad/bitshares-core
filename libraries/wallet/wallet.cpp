@@ -1175,7 +1175,7 @@ public:
    } FC_CAPTURE_AND_RETHROW( (account_name)(registrar_account)(referrer_account) ) }
 
    signed_transaction create_custom_authority(account_id_type account,
-                                              string operation_name,
+                                              int operation_type,
                                               time_point_sec valid_from,
                                               time_point_sec valid_to,
                                               vector<restriction_v2> restrictions)
@@ -1187,7 +1187,7 @@ public:
       op.enabled = true;
       op.valid_from = valid_from;
       op.valid_to = valid_to;
-      op.operation_name = operation_name;
+      op.operation_type = operation_type;
       op.restrictions = restrictions;
       
       signed_transaction tx;
@@ -1196,7 +1196,7 @@ public:
       tx.validate();
       
       return sign_transaction( tx, true );
-   } FC_CAPTURE_AND_RETHROW ( (account)(operation_name) ) }
+   } FC_CAPTURE_AND_RETHROW ( (account)(operation_type) ) }
       
    vector<custom_authority_object> list_custom_authorities(account_id_type account)
    { try {
@@ -1204,7 +1204,7 @@ public:
    } FC_CAPTURE_AND_RETHROW ( (account) ) }
    
    signed_transaction update_custom_authority(object_id_type auth,
-                                              string operation_name,
+                                              int operation_type,
                                               bool enabled,
                                               time_point_sec valid_from,
                                               time_point_sec valid_to,
@@ -1215,7 +1215,7 @@ public:
       op.enabled = enabled;
       op.valid_from = valid_from;
       op.valid_to = valid_to;
-      op.operation_name = operation_name;
+      op.operation_type = operation_type;
       op.restrictions = restrictions;
       
       signed_transaction tx;
@@ -1224,7 +1224,7 @@ public:
       tx.validate();
       
       return sign_transaction( tx, true );
-   } FC_CAPTURE_AND_RETHROW ( (auth)(operation_name) ) }
+   } FC_CAPTURE_AND_RETHROW ( (auth)(operation_type) ) }
    
    signed_transaction delete_custom_authority(object_id_type auth)
    { try {
@@ -3497,12 +3497,12 @@ signed_transaction wallet_api::create_account_with_brain_key(string brain_key, s
 }
     
 signed_transaction wallet_api::create_custom_authority(account_id_type account,
-                                                       string operation_name,
+                                                       int operation_type,
                                                        time_point_sec valid_from,
                                                        time_point_sec valid_to,
                                                        vector<restriction_v2> restrictions)
 {
-   return my->create_custom_authority(account, operation_name, valid_from, valid_to, restrictions);
+   return my->create_custom_authority(account, operation_type, valid_from, valid_to, restrictions);
 }
 
 vector<custom_authority_object> wallet_api::list_custom_authorities(account_id_type account)
@@ -3511,13 +3511,13 @@ vector<custom_authority_object> wallet_api::list_custom_authorities(account_id_t
 }
 
 signed_transaction wallet_api::update_custom_authority(object_id_type auth,
-                                                       string operation_name,
+                                                       int operation_type,
                                                        bool enabled,
                                                        time_point_sec valid_from,
                                                        time_point_sec valid_to,
                                                        vector<restriction_v2> restrictions)
 {
-   return my->update_custom_authority(auth, operation_name, enabled, valid_from, valid_to, restrictions);
+   return my->update_custom_authority(auth, operation_type, enabled, valid_from, valid_to, restrictions);
 }
 
 signed_transaction wallet_api::delete_custom_authority(object_id_type auth)

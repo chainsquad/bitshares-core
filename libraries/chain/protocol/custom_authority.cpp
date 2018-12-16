@@ -23,10 +23,12 @@
  */
 #include <graphene/chain/protocol/custom_authority.hpp>
 #include <graphene/chain/protocol/operations.hpp>
+#include <graphene/chain/operation_type_to_id.hpp>
 
 namespace graphene { namespace chain {
 
 namespace {
+   template <typename Operation>
    struct restriction_validator_visitor
    {
       typedef void result_type;
@@ -34,8 +36,24 @@ namespace {
       template <typename Restriction>
       void operator () (const Restriction& rest) const
       {
-         rest.template validate<assert_operation>();
+         rest.template validate<Operation>();
       }
+   };
+   
+   struct operation_type_checker
+   {
+      operation_type_checker(const restriction_v2& a_rest)
+      : rest(a_rest)
+      {}
+      
+      template <typename Operation>
+      void operator () () const
+      {
+         restriction_validator_visitor<Operation> visitor;
+         rest.visit(visitor);
+      }
+      
+      const restriction_v2& rest;
    };
 }
    
@@ -76,8 +94,7 @@ void custom_authority_create_operation::validate()const
    
    for( const auto& r : restrictions )
    {
-      restriction_validator_visitor visitor;
-      r.visit(visitor);
+      operation_type_from_operation_id(operation_type, operation_type_checker(r));
    }
 }
 
@@ -106,8 +123,7 @@ void custom_authority_update_operation::validate()const
    
    for( const auto& r : restrictions )
    {
-      restriction_validator_visitor visitor;
-      r.visit(visitor);
+      operation_type_from_operation_id(operation_type, operation_type_checker(r));
    }
 }
 

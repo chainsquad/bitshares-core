@@ -834,7 +834,7 @@ class wallet_api
                                                        bool broadcast = false);
     
       signed_transaction create_custom_authority(account_id_type account,
-                                                 string operation_name,
+                                                 int operation_type,
                                                  time_point_sec valid_from,
                                                  time_point_sec valid_to,
                                                  vector<restriction_v2> restrictions);
@@ -842,7 +842,7 @@ class wallet_api
       vector<custom_authority_object> list_custom_authorities(account_id_type account);
     
       signed_transaction update_custom_authority(object_id_type auth,
-                                                 string operation_name,
+                                                 int operation_type,
                                                  bool enabled,
                                                  time_point_sec valid_from,
                                                  time_point_sec valid_to,

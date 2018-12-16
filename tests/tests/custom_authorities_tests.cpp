@@ -39,10 +39,10 @@ BOOST_AUTO_TEST_CASE( validation_for_correct_operation_name_is_passed )
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    BOOST_CHECK_NO_THROW(auth.validate(transfer_operation(), time_point_sec(0)));
    
-   auth.operation_name = "graphene::chain::asset_create_operation";
+   auth.operation_type = operation_type_id_from_operation_type<asset_create_operation>::value;
    BOOST_CHECK_NO_THROW(auth.validate(asset_create_operation(), time_point_sec(0)));
 }
 
@@ -50,10 +50,10 @@ BOOST_AUTO_TEST_CASE( validation_for_wrong_operation_name_is_failed )
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::asset_create_operation";
+   auth.operation_type = operation_type_id_from_operation_type<asset_create_operation>::value;
    BOOST_CHECK_THROW(auth.validate(transfer_operation(), time_point_sec(0)), fc::exception);
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    BOOST_CHECK_THROW(auth.validate(asset_create_operation(), time_point_sec(0)), fc::exception);
 }
 
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( validation_fails_when_now_is_after_valid_period )
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    auth.valid_from = time_point_sec(0);
    auth.valid_to = time_point_sec(5);
    BOOST_CHECK_THROW(auth.validate(transfer_operation(), time_point_sec(6)), fc::exception);
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE( validation_fails_when_now_is_before_valid_period )
 {
    graphene::chain::custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    auth.valid_from = time_point_sec(3);
    auth.valid_to = time_point_sec(5);
    BOOST_CHECK_THROW(auth.validate(transfer_operation(), time_point_sec(1)), fc::exception);
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( validation_passes_when_now_is_in_valid_period )
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    auth.valid_from = time_point_sec(3);
    auth.valid_to = time_point_sec(5);
    BOOST_CHECK_NO_THROW(auth.validate(transfer_operation(), time_point_sec(4)));
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE( validation_passes_when_no_restrictions_for_operation_argum
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    auth.valid_from = time_point_sec(3);
    auth.valid_to = time_point_sec(5);
    
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE( validation_passes_when_one_restriction_passes_for_operatio
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    auth.valid_from = time_point_sec(3);
    auth.valid_to = time_point_sec(5);
    
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE( validation_passes_when_several_restriction_passes_for_oper
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    auth.valid_from = time_point_sec(3);
    auth.valid_to = time_point_sec(5);
    
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE( validation_fails_when_one_restriction_fails_for_operation_
 {
    custom_authority_object auth;
    
-   auth.operation_name = "graphene::chain::transfer_operation";
+   auth.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
    auth.valid_from = time_point_sec(3);
    auth.valid_to = time_point_sec(5);
    

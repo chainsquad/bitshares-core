@@ -40,7 +40,7 @@ struct operation_type_id_from_operation_type
 template <> \
 struct operation_type_id_from_operation_type<elem> \
 { \
-static const int value = i; \
+   static const int value = i; \
 }; \
 
 
@@ -52,9 +52,9 @@ template <typename Action>
 void operation_type_from_operation_id(const int operation_type_id, const Action& action)
 {
 #define GRAPHENE_GENERATE_OP_ID_TO_TYPE_MAPPER(r, data, i, elem) \
-case i: \
-action.template operator()<elem>(); \
-break;
+      case i: \
+         action.template operator()<elem>(); \
+         break;
    
    switch (operation_type_id)
    {

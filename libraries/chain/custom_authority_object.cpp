@@ -24,6 +24,7 @@
 
 #include <graphene/chain/custom_authority_object.hpp>
 #include <fc/reflect/reflect.hpp>
+#include <graphene/chain/operation_type_to_id.hpp>
 
 using namespace graphene::chain;
 
@@ -85,6 +86,23 @@ namespace  {
       
       op.visit(operation_validator);
    }
+   
+   struct type_id_visitor
+   {
+      typedef int result_type;
+      
+      template <class Operation>
+      int operator () ( const Operation& )
+      {
+         return operation_type_id_from_operation_type<Operation>::value;
+      }
+   };
+   
+   int get_type_id( const operation& an_operation )
+   {
+      type_id_visitor visitor;
+      return an_operation.visit(visitor);
+   }
 }
 
 void custom_authority_object::validate( const operation& op, const time_point_sec now ) const
@@ -94,9 +112,9 @@ void custom_authority_object::validate( const operation& op, const time_point_se
       FC_THROW("Failed to validate the operation because now is not in valid period.");
    }
    
-   if (get_operation_name(op) != operation_name)
+   if (operation_type.value != get_type_id(op))
    {
-      FC_THROW("Failed to validate the operation because now is has the wrong type.");
+      FC_THROW("Failed to validate the operation because is has the wrong type.");
    }
    
    for (auto& rest: restrictions)
