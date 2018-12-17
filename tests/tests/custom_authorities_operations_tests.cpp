@@ -362,4 +362,63 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_one_authority_passed_and_one_failed
    }
 }
 
+BOOST_AUTO_TEST_CASE(transaction_fails_with_one_authority_failed_and_one_disabled) {
+   try {
+      auto dan = create_account("dan");
+      
+      generate_block();
+      fc::usleep(fc::milliseconds(2000));
+      
+      {
+         custom_authority_create_operation op; //should pass for this authority
+         op.account = dan.id;
+         op.enabled = true;
+         op.valid_from = db.head_block_time() - 1;
+         op.valid_to = db.head_block_time() + 20;
+         op.operation_type = operation_type_id_from_operation_type<custom_authority_create_operation>::value;
+         
+         trx.operations.push_back(op);
+         trx.validate();
+         
+         db.push_transaction(trx, ~0);
+         trx.operations.clear();
+      }
+      
+      {
+         custom_authority_create_operation op; //should pass for this authority
+         op.account = dan.id;
+         op.enabled = false;
+         op.valid_from = db.head_block_time() - 1;
+         op.valid_to = db.head_block_time() + 20;
+         op.operation_type = operation_type_id_from_operation_type<custom_authority_delete_operation>::value;
+         
+         trx.operations.push_back(op);
+         trx.validate();
+         
+         db.push_transaction(trx, ~0);
+         trx.operations.clear();
+      }
+      
+      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      BOOST_REQUIRE(!authorities.empty());
+      
+      {
+         custom_authority_delete_operation op;
+         op.account = dan.id;
+         op.custom_id = authorities.front().id;
+         
+         trx.operations.push_back(op);
+         trx.validate();
+         
+         BOOST_CHECK_THROW(db.push_transaction(trx, ~0), fc::exception);
+         
+         trx.operations.clear();
+      }
+      
+   } catch (fc::exception &e) {
+      edump((e.to_detail_string()));
+      throw;
+   }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
