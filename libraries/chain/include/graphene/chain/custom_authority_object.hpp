@@ -50,7 +50,7 @@ namespace graphene { namespace chain {
          authority                       auth;
          vector<restriction_v2>          restrictions;
        
-         void validate(const operation& an_operation, const time_point_sec now) const;
+         bool validate(const operation& an_operation, const time_point_sec now) const;
    };
 
    struct by_account;

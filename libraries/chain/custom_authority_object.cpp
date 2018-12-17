@@ -29,6 +29,7 @@
 using namespace graphene::chain;
 
 namespace  {
+   
    template <typename Operation>
    struct specific_operation_validation_visitor
    {
@@ -84,20 +85,29 @@ namespace  {
    }
 }
 
-void custom_authority_object::validate( const operation& op, const time_point_sec now ) const
+bool custom_authority_object::validate( const operation& op, const time_point_sec now ) const
 {
-   if (now < valid_from || valid_to < now)
+   try
    {
-      FC_THROW("Failed to validate the operation because now is not in valid period.");
+      if (now < valid_from || valid_to < now)
+      {
+         FC_THROW("Failed to validate the operation because now is not in valid period.");
+      }
+      
+      if (operation_type.value != get_type_id(op))
+      {
+         FC_THROW("Failed to validate the operation because is has the wrong type.");
+      }
+      
+      for (auto& rest: restrictions)
+      {
+         validate_operation_by_restriction(op, rest);
+      }
+      
+      return true;
    }
-   
-   if (operation_type.value != get_type_id(op))
+   catch (fc::exception&)
    {
-      FC_THROW("Failed to validate the operation because is has the wrong type.");
-   }
-   
-   for (auto& rest: restrictions)
-   {
-      validate_operation_by_restriction(op, rest);
+      return false; // validation failed
    }
 }
