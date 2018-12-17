@@ -59,6 +59,19 @@ namespace {
       
       return result;
    }
+   
+   bool validate_custom_authority(const custom_authority_object& auth, const operation& op, const time_point_sec& now)
+   {
+      try
+      {
+         auth.validate(op, now);
+         return true;
+      }
+      catch (const fc::exception&)
+      {
+         return false;
+      }
+   }
 }
    
 bool database::is_known_block( const block_id_type& id )const
@@ -675,23 +688,22 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
       
       for (auto& account_id: required_accounts)
       {
-         
          std::cout << "line " << __LINE__ << std::endl;
          
          auto custom_authorities = get_custom_authorities_by_account(*this, account_id);
          
+         bool operation_validated = custom_authorities.empty();
          for (auto& custom_auth: custom_authorities)
          {
             std::cout << "line " << __LINE__ << std::endl;
-            
-            custom_auth.validate(op, head_block_time());
-            
-            std::cout << "line " << __LINE__ << std::endl;
+            operation_validated |= validate_custom_authority(custom_auth, op, head_block_time());
          }
+         
+         std::cout << "line " << __LINE__ << std::endl;
+         FC_ASSERT(operation_validated, "Operation was not validated by any custom authority.");
       }
    }
    
-
    //Skip all manner of expiration and TaPoS checking if we're on block 1; It's impossible that the transaction is
    //expired, and TaPoS makes no sense as no blocks exist.
    if( BOOST_LIKELY(head_block_num() > 0) )

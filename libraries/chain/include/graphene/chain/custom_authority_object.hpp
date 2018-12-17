@@ -53,7 +53,6 @@ namespace graphene { namespace chain {
          void validate(const operation& an_operation, const time_point_sec now) const;
    };
 
-   struct by_account_custom;
    struct by_account;
 
    /**
@@ -63,14 +62,7 @@ namespace graphene { namespace chain {
       custom_authority_object,
       indexed_by<
          ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
-         ordered_non_unique< tag<by_account>, member< custom_authority_object, account_id_type, &custom_authority_object::account > >,
-         ordered_unique< tag<by_account_custom>,
-            composite_key<
-               custom_authority_object,
-               member<custom_authority_object, account_id_type, &custom_authority_object::account>,
-               member<custom_authority_object, uint32_t, &custom_authority_object::custom_id>
-            >
-         >
+         ordered_non_unique< tag<by_account>, member< custom_authority_object, account_id_type, &custom_authority_object::account > >
       >
    > custom_authority_multi_index_type;
 
