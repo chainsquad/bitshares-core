@@ -29,6 +29,7 @@
 #include <graphene/chain/block_summary_object.hpp>
 #include <graphene/chain/global_property_object.hpp>
 #include <graphene/chain/operation_history_object.hpp>
+#include <graphene/chain/custom_authority_object.hpp>
 
 #include <graphene/chain/proposal_object.hpp>
 #include <graphene/chain/transaction_object.hpp>
@@ -39,8 +40,27 @@
 
 #include <fc/smart_ref_impl.hpp>
 
+#include <iostream>
+
 namespace graphene { namespace chain {
 
+namespace {
+   vector< custom_authority_object > get_custom_authorities_by_account( database& db, account_id_type account )
+   {
+      const auto& authority_by_account = db.get_index_type<custom_authority_index>().indices().get<by_account>();
+      
+      vector<custom_authority_object> result;
+      
+      auto itr = authority_by_account.find(account);
+      while(itr != authority_by_account.end())
+      {
+         result.emplace_back(*itr++);
+      }
+      
+      return result;
+   }
+}
+   
 bool database::is_known_block( const block_id_type& id )const
 {
    return _fork_db.is_known_block(id) || _block_id_to_block.contains(id);
@@ -605,8 +625,6 @@ void database::_apply_block( const signed_block& next_block )
    notify_changed_objects();
 } FC_CAPTURE_AND_RETHROW( (next_block.block_num()) )  }
 
-
-
 processed_transaction database::apply_transaction(const signed_transaction& trx, uint32_t skip)
 {
    processed_transaction result;
@@ -639,6 +657,40 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
       auto get_owner  = [&]( account_id_type id ) { return &id(*this).owner;  };
       trx.verify_authority( chain_id, get_active, get_owner, get_global_properties().parameters.max_authority_depth );
    }
+   
+   for (auto& op: trx.operations)
+   {
+      std::cout << "line " << __LINE__ << std::endl;
+      
+      flat_set<account_id_type> required_accounts;
+      
+      flat_set<account_id_type> active_accounts;
+      flat_set<account_id_type> owner_accounts;
+      vector<authority>  other_authorities;
+      
+      operation_get_required_authorities(op, active_accounts, owner_accounts, other_authorities);
+      
+      required_accounts.insert(active_accounts.begin(), active_accounts.end());
+      required_accounts.insert(owner_accounts.begin(), owner_accounts.end());
+      
+      for (auto& account_id: required_accounts)
+      {
+         
+         std::cout << "line " << __LINE__ << std::endl;
+         
+         auto custom_authorities = get_custom_authorities_by_account(*this, account_id);
+         
+         for (auto& custom_auth: custom_authorities)
+         {
+            std::cout << "line " << __LINE__ << std::endl;
+            
+            custom_auth.validate(op, head_block_time());
+            
+            std::cout << "line " << __LINE__ << std::endl;
+         }
+      }
+   }
+   
 
    //Skip all manner of expiration and TaPoS checking if we're on block 1; It's impossible that the transaction is
    //expired, and TaPoS makes no sense as no blocks exist.

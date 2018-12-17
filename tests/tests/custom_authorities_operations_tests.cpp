@@ -192,4 +192,71 @@ BOOST_AUTO_TEST_CASE(delete_custom_authority) {
    }
 }
 
+BOOST_AUTO_TEST_CASE(transaction_passes_without_authorities_installed) {
+   try {
+      auto dan = create_account("dan");
+      
+      generate_block();
+      fc::usleep(fc::milliseconds(2000));
+      
+      custom_authority_create_operation op;
+      op.account = dan.id;
+      op.enabled = true;
+      op.valid_from = time_point_sec(1);
+      op.valid_to = time_point_sec(2);
+      op.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
+      
+      trx.operations.push_back(op);
+      trx.validate();
+      
+      BOOST_CHECK_NO_THROW(db.push_transaction(trx, ~0));
+
+   } catch (fc::exception &e) {
+      edump((e.to_detail_string()));
+      throw;
+   }
+}
+
+BOOST_AUTO_TEST_CASE(transaction_fails_with_authorities_installed) {
+   try {
+      auto dan = create_account("dan");
+      
+      generate_block();
+      fc::usleep(fc::milliseconds(2000));
+      
+      custom_authority_create_operation op;
+      op.account = dan.id;
+      op.enabled = true;
+      op.valid_from = time_point_sec(1); //validation will fail because of not valid interval
+      op.valid_to = time_point_sec(2);
+      op.operation_type = operation_type_id_from_operation_type<custom_authority_delete_operation>::value;
+      
+      trx.operations.push_back(op);
+      trx.validate();
+      
+      db.push_transaction(trx, ~0);
+      trx.operations.clear();
+      
+      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      BOOST_REQUIRE_EQUAL(1, authorities.size());
+      
+      {
+         custom_authority_delete_operation op;
+         op.account = dan.id;
+         op.custom_id = authorities.front().id;
+         
+         trx.operations.push_back(op);
+         trx.validate();
+         
+         BOOST_CHECK_THROW(db.push_transaction(trx, ~0), fc::exception);
+         
+         trx.operations.clear();
+      }
+      
+   } catch (fc::exception &e) {
+      edump((e.to_detail_string()));
+      throw;
+   }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
