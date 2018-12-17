@@ -33,24 +33,6 @@ using namespace graphene::chain;
 using namespace graphene::chain::test;
 using namespace graphene::app;
 
-namespace {
-   vector< custom_authority_object > get_custom_authorities_by_account( database& db, account_id_type account )
-   {
-      const auto& authority_by_account = db.get_index_type<custom_authority_index>().indices().get<by_account>();
-      
-      vector<custom_authority_object> result;
-      
-      auto itr = authority_by_account.find(account);
-      while(itr != authority_by_account.end())
-      {
-         result.emplace_back(*itr++);
-      }
-      
-      return result;
-   }
-   
-}
-
 BOOST_FIXTURE_TEST_SUITE( custom_authorities_operations, database_fixture )
 
 BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities) {
@@ -59,7 +41,7 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities) {
       
       generate_block();
       
-      BOOST_CHECK(get_custom_authorities_by_account(db, dan.id).empty());
+      BOOST_CHECK(db.get_custom_authorities_by_account(dan.id).empty());
    } catch (fc::exception &e) {
       edump((e.to_detail_string()));
       throw;
@@ -92,7 +74,7 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities_but_w
       processed_transaction ptx = db.push_transaction(trx, ~0);
       trx.operations.clear();
       
-      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(0, authorities.size());
    } catch (fc::exception &e) {
       edump((e.to_detail_string()));
@@ -125,7 +107,7 @@ BOOST_AUTO_TEST_CASE(create_custom_authority_operation_) {
       processed_transaction ptx = db.push_transaction(trx, ~0);
       trx.operations.clear();
       
-      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(1, authorities.size());
       BOOST_CHECK(dan.id == authorities.front().account);
       BOOST_CHECK(authorities.front().enabled);
@@ -170,7 +152,7 @@ BOOST_AUTO_TEST_CASE(delete_custom_authority) {
       processed_transaction ptx = db.push_transaction(trx, ~0);
       trx.operations.clear();
       
-      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(1, authorities.size());
       
       {
@@ -183,7 +165,7 @@ BOOST_AUTO_TEST_CASE(delete_custom_authority) {
          trx.operations.clear();
       }
       
-      authorities = get_custom_authorities_by_account(db, dan.id);
+      authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(0, authorities.size());
       
    } catch (fc::exception &e) {
@@ -237,7 +219,7 @@ BOOST_AUTO_TEST_CASE(transaction_fails_with_authorities_installed) {
       db.push_transaction(trx, ~0);
       trx.operations.clear();
       
-      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(1, authorities.size());
       
       {
@@ -281,7 +263,7 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_authorities_installed) {
          trx.operations.clear();
       }
       
-      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(1, authorities.size());
       
       {
@@ -340,7 +322,7 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_one_authority_passed_and_one_failed
          trx.operations.clear();
       }
       
-      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE(!authorities.empty());
       
       {
@@ -399,7 +381,7 @@ BOOST_AUTO_TEST_CASE(transaction_fails_with_one_authority_failed_and_one_disable
          trx.operations.clear();
       }
       
-      auto authorities = get_custom_authorities_by_account(db, dan.id);
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE(!authorities.empty());
       
       {

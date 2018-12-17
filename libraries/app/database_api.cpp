@@ -2106,17 +2106,7 @@ vector< custom_authority_object > database_api::get_custom_authorities_by_accoun
 
 vector< custom_authority_object > database_api_impl::get_custom_authorities_by_account( account_id_type account )const
 {
-   const auto& authority_by_account = _db.get_index_type<custom_authority_index>().indices().get<by_account>();
-   
-   vector<custom_authority_object> result;
-   
-   auto itr = authority_by_account.find(account);
-   while(itr != authority_by_account.end())
-   {
-      result.emplace_back(*itr++);
-   }
-   
-   return result;
+   return _db.get_custom_authorities_by_account(account);
 }
    
 /**

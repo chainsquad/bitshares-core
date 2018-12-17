@@ -45,21 +45,6 @@
 namespace graphene { namespace chain {
 
 namespace {
-   vector< custom_authority_object > get_custom_authorities_by_account( database& db, account_id_type account )
-   {
-      const auto& authority_by_account = db.get_index_type<custom_authority_index>().indices().get<by_account>();
-      
-      vector<custom_authority_object> result;
-      
-      auto itr = authority_by_account.find(account);
-      while(itr != authority_by_account.end())
-      {
-         result.emplace_back(*itr++);
-      }
-      
-      return result;
-   }
-   
    vector< custom_authority_object > remove_disabled_custom_authorities( const vector< custom_authority_object >& custom_authorities )
    {
       vector< custom_authority_object > result;
@@ -688,7 +673,7 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
       
       for (auto& account_id: required_accounts)
       {
-         auto custom_authorities = get_custom_authorities_by_account(*this, account_id);
+         auto custom_authorities = get_custom_authorities_by_account(account_id);
          custom_authorities = remove_disabled_custom_authorities(custom_authorities);
          
          bool operation_validated = custom_authorities.empty();
@@ -806,6 +791,21 @@ void database::add_checkpoints( const flat_map<uint32_t,block_id_type>& checkpts
 bool database::before_last_checkpoint()const
 {
    return (_checkpoints.size() > 0) && (_checkpoints.rbegin()->first >= head_block_num());
+}
+   
+vector< custom_authority_object > database::get_custom_authorities_by_account( account_id_type account ) const
+{
+   const auto& authority_by_account = get_index_type<custom_authority_index>().indices().get<by_account>();
+   
+   vector<custom_authority_object> result;
+   
+   auto itr = authority_by_account.find(account);
+   while(itr != authority_by_account.end())
+   {
+      result.emplace_back(*itr++);
+   }
+   
+   return result;
 }
 
 } }
