@@ -96,7 +96,7 @@ struct base_list_restriction
 template <typename Action>
 struct base_comparision_restriction
 {
-   int64_t value;
+   uint64_t value;
    std::string argument;
    
    template <typename Operation>
@@ -335,10 +335,68 @@ typedef base_list_restriction<any_of>               any_restriction;
 typedef base_list_restriction<none_of>              none_restriction;
 typedef base_list_restriction<contains_all>         contains_all_restriction;
 typedef base_list_restriction<contains_none>        contains_none_restriction;
+
+struct restriction_holder;
+
+struct attribute_assert
+{
+   string argument;
+   vector<restriction_holder> restrictions;
+   
+   template <typename Operation>
+   void validate( const Operation& op ) const
+   {
+     
+   }
+   
+   template <typename Operation>
+   void validate() const
+   {
+     
+   }
+};
     
-typedef fc::static_variant<eq_restriction, neq_restriction, any_restriction, none_restriction, contains_all_restriction, contains_none_restriction> restriction_v2;
+   typedef fc::static_variant</*lt_restriction,*/
+                           eq_restriction,
+                           neq_restriction,
+                           any_restriction,
+                           none_restriction,
+                           contains_all_restriction,
+                           contains_none_restriction,
+                           attribute_assert> restriction_v2;
+   
+struct restriction_holder
+{
+   restriction_holder() = default;
+   
+   restriction_holder(const restriction_v2& a_rest)
+   : rest(a_rest)
+   {}
+   
+   restriction_v2 rest;
+};
 
 } }
+
+FC_REFLECT( graphene::chain::lt_restriction,
+           (value)
+           (argument)
+           )
+
+FC_REFLECT( graphene::chain::le_restriction,
+           (value)
+           (argument)
+           )
+
+FC_REFLECT( graphene::chain::gt_restriction,
+           (value)
+           (argument)
+           )
+
+FC_REFLECT( graphene::chain::ge_restriction,
+           (value)
+           (argument)
+           )
 
 FC_REFLECT( graphene::chain::eq_restriction,
            (value)
@@ -368,4 +426,13 @@ FC_REFLECT( graphene::chain::contains_all_restriction,
 FC_REFLECT( graphene::chain::contains_none_restriction,
            (values)
            (argument)
+           )
+
+FC_REFLECT( graphene::chain::restriction_holder,
+           (rest)
+           )
+
+FC_REFLECT( graphene::chain::attribute_assert,
+           (argument)
+           (restrictions)
            )
