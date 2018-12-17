@@ -29,19 +29,6 @@
 using namespace graphene::chain;
 
 namespace  {
-   struct type_name_visitor
-   {
-      typedef void result_type;
-      
-      template <class T>
-      void operator () ( const T& )
-      {
-         type_name = fc::get_typename<T>::name();
-      }
-      
-      std::string type_name;
-   };
-   
    template <typename Operation>
    struct specific_operation_validation_visitor
    {
@@ -70,14 +57,6 @@ namespace  {
          rest.visit(visitor);
       }
    };
-   
-   std::string get_operation_name( const operation& an_operation )
-   {
-      type_name_visitor type_name_retriver;
-      an_operation.visit(type_name_retriver);
-      
-      return type_name_retriver.type_name;
-   }
    
    void validate_operation_by_restriction( const operation& op, const restriction_v2& rest )
    {
