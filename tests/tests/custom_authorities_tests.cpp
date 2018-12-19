@@ -168,12 +168,12 @@ BOOST_AUTO_TEST_CASE( validation_fails_when_one_restriction_fails_for_operation_
    BOOST_CHECK(!auth.validate(op, time_point_sec(4)));
 }
 
-BOOST_AUTO_TEST_CASE( validate_eq_restriction_correctness_fails_when_argument_is_extensions_type )
+BOOST_AUTO_TEST_CASE( validate_eq_restriction_correctness_fails_when_argument_is_not_supported_type )
 {
    eq_restriction rest;
-   rest.argument = "extensions";
+   rest.argument = "new_options";
    
-   BOOST_CHECK_THROW(rest.validate<assert_operation>(), fc::exception);
+   BOOST_CHECK_THROW(rest.validate<asset_update_bitasset_operation>(), fc::exception);
 }
 
 BOOST_AUTO_TEST_CASE( validate_eq_restriction_correctness_passes_when_argument_is_asset )

@@ -23,9 +23,55 @@
  */
 #pragma once
 
+#include <graphene/chain/protocol/vesting.hpp>
+#include <graphene/chain/protocol/worker.hpp>
+#include <graphene/chain/protocol/confidential.hpp>
+#include <graphene/chain/protocol/account.hpp>
+#include <graphene/chain/protocol/assert.hpp>
+#include <graphene/chain/protocol/asset_ops.hpp>
+#include <graphene/chain/protocol/chain_parameters.hpp>
+
 namespace graphene { namespace chain {
    
-typedef fc::static_variant<asset, account_id_type, extensions_type, future_extensions, public_key_type, time_point_sec, bool > generic_member;
+typedef fc::static_variant<
+   bool,
+   uint8_t,
+   uint16_t,
+   uint32_t,
+   asset,
+   account_id_type,
+   asset_id_type,
+   balance_id_type,
+   proposal_id_type,
+   fba_accumulator_id_type,
+   limit_order_id_type,
+   withdraw_permission_id_type,
+   witness_id_type,
+   force_settlement_id_type,
+   committee_member_id_type,
+   public_key_type,
+   time_point_sec,
+   unsigned_int,
+   vector<blind_output>,
+   vector<blind_input>,
+   vector<char>,
+   string,
+   price,
+   price_feed,
+   share_type,
+   vesting_policy_initializer,
+   worker_initializer,
+   empty_extensions_type,
+   extensions_type,
+   future_extensions,
+   authority,
+   account_options,
+   vector<predicate>,
+   flat_set<account_id_type>,
+   asset_options,
+   bitasset_options,
+   flat_set<public_key_type>
+   > generic_member;
 
 template <typename T, typename Action>
 struct member_visitor
@@ -75,41 +121,7 @@ private:
    const std::string m_member_name;
    Action m_action;
 };
-
-template <class T>
-bool is_equal(const T& left, const T& right)
-{
-   FC_THROW("Can't compare types. Type '${type_name}' don't support == operator.", ("type_name", fc::get_typename<T>::name()));
-}
-
-inline bool is_equal(const asset& left, const asset& right)
-{
-   return left == right;
-}
-
-inline bool is_equal(const account_id_type& left, const account_id_type& right)
-{
-   return left == right;
-}
-
-template <typename T>
-const T& get(const generic_member& a_variant)
-{
-   FC_THROW("Can't fetch value. Type '${type_name}' is not supported for now.", ("type_name", fc::get_typename<T>::name()));
-}
-
-template <>
-inline const asset& get<asset>(const generic_member& a_variant)
-{
-   return a_variant.get<asset>();
-}
-
-template <>
-inline const account_id_type& get<account_id_type>(const generic_member& a_variant)
-{
-   return a_variant.get<account_id_type>();
-}
-
+   
 struct number_to_integer
 {
    template <typename T>
@@ -209,8 +221,59 @@ void is_type_supported_by_restriction()
 {
    FC_THROW("Type is not supprted by restruction. Typename = ${name}", ("name", fc::get_typename<T>::name()));
 }
+   
+template <class T>
+bool is_equal(const T& left, const T& right)
+{
+   FC_THROW("Can't compare types. Type '${type_name}' don't support == operator.", ("type_name", fc::get_typename<T>::name()));
+}
 
-template <> inline void is_type_supported_by_restriction<asset>() {}
-template <> inline void is_type_supported_by_restriction<account_id_type>() {}
+template <typename T>
+const T& get(const generic_member& a_variant)
+{
+   FC_THROW("Can't fetch value. Type '${type_name}' is not supported for now.", ("type_name", fc::get_typename<T>::name()));
+}
+
+#define GRAPHENE_RESTRICTION_TYPE(type) \
+inline bool is_equal(const type& left, const type& right) {   return left == right; } \
+\
+template <> \
+inline const type& get<type>(const generic_member& a_variant) { return a_variant.get<type>(); } \
+\
+template <> inline void is_type_supported_by_restriction<type>() {} \
+
+   GRAPHENE_RESTRICTION_TYPE(uint8_t);
+   GRAPHENE_RESTRICTION_TYPE(uint16_t);
+   GRAPHENE_RESTRICTION_TYPE(uint32_t);
+   GRAPHENE_RESTRICTION_TYPE(asset_id_type);
+   GRAPHENE_RESTRICTION_TYPE(account_id_type);
+   GRAPHENE_RESTRICTION_TYPE(balance_id_type);
+   GRAPHENE_RESTRICTION_TYPE(proposal_id_type);
+   GRAPHENE_RESTRICTION_TYPE(fba_accumulator_id_type);
+   GRAPHENE_RESTRICTION_TYPE(limit_order_id_type);
+   GRAPHENE_RESTRICTION_TYPE(withdraw_permission_id_type);
+   GRAPHENE_RESTRICTION_TYPE(witness_id_type);
+   GRAPHENE_RESTRICTION_TYPE(force_settlement_id_type);
+   GRAPHENE_RESTRICTION_TYPE(committee_member_id_type);
+   GRAPHENE_RESTRICTION_TYPE(public_key_type);
+   GRAPHENE_RESTRICTION_TYPE(time_point_sec);
+   GRAPHENE_RESTRICTION_TYPE(bool);
+   GRAPHENE_RESTRICTION_TYPE(unsigned_int);
+   GRAPHENE_RESTRICTION_TYPE(vector<char>);
+   GRAPHENE_RESTRICTION_TYPE(string);
+   GRAPHENE_RESTRICTION_TYPE(asset);
+   GRAPHENE_RESTRICTION_TYPE(price);
+   GRAPHENE_RESTRICTION_TYPE(price_feed);
+   GRAPHENE_RESTRICTION_TYPE(share_type);
+   GRAPHENE_RESTRICTION_TYPE(vesting_policy_initializer);
+   GRAPHENE_RESTRICTION_TYPE(worker_initializer);
+   GRAPHENE_RESTRICTION_TYPE(extensions_type);
+   GRAPHENE_RESTRICTION_TYPE(future_extensions);
+   GRAPHENE_RESTRICTION_TYPE(vector<predicate>);
+   GRAPHENE_RESTRICTION_TYPE(authority);
+   GRAPHENE_RESTRICTION_TYPE(flat_set<account_id_type>);
+   GRAPHENE_RESTRICTION_TYPE(flat_set<public_key_type>);
+
+#undef GRAPHENE_RESTRICTION_TYPE
 
 } } 
