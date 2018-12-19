@@ -76,7 +76,7 @@ typedef fc::static_variant<
 template <typename T, typename Action>
 struct member_visitor
 {
-   member_visitor(const std::string& member_name,  const Action& action, const T& object)
+   member_visitor(const std::string& member_name, const Action& action, const T& object)
    : m_member_name(member_name)
    , m_action(action)
    , m_object(object)
@@ -100,6 +100,31 @@ private:
 };
 
 template <typename Action>
+struct optional_unwrapper_action_decorator
+{
+   const Action& action;
+   
+   optional_unwrapper_action_decorator(const Action& an_action)
+   : action(an_action)
+   {}
+  
+   template <class T>
+   void operator () (const optional<T>& member) const
+   {
+      if (member)
+      {
+         action(*member);
+      }
+   }
+   
+   template <class T>
+   void operator () (const T& member) const
+   {
+      action(member);
+   }
+};
+
+template <typename Action>
 class operation_member_visitor
 {
 public:
@@ -113,7 +138,7 @@ public:
    template <typename Operation>
    void operator () (const Operation& op) const
    {
-      member_visitor<Operation, Action> vistor(m_member_name, m_action, op);
+      member_visitor<Operation, optional_unwrapper_action_decorator<Action>> vistor(m_member_name,
       fc::reflector<Operation>::visit(vistor);
    }
    
@@ -227,7 +252,7 @@ bool is_equal(const T& left, const T& right)
 {
    FC_THROW("Can't compare types. Type '${type_name}' don't support == operator.", ("type_name", fc::get_typename<T>::name()));
 }
-
+   
 template <typename T>
 const T& get(const generic_member& a_variant)
 {

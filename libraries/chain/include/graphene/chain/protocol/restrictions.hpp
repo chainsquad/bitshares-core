@@ -60,7 +60,8 @@ struct base_restriction
    template <typename Operation>
    void validate( const Operation& op ) const
    {
-      member_visitor<Operation, Action> visitor(argument, Action(value), op);
+      Action action(value);
+      member_visitor<Operation, optional_unwrapper_action_decorator<Action>> visitor(argument, optional_unwrapper_action_decorator<Action>(action), op);
       fc::reflector<Operation>::visit(visitor);
    }
    

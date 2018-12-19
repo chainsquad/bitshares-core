@@ -573,6 +573,41 @@ BOOST_AUTO_TEST_CASE( ge_restriction_passes_for_argument_greater_than_value)
    BOOST_CHECK_NO_THROW(restriction.validate(operation));
 }
 
+BOOST_AUTO_TEST_CASE( optional_field_validation_passes_when_optional_is_empty)
+{
+   asset_update_operation operation;
+   
+   eq_restriction restriction;
+   restriction.value = account_id_type(1);
+   restriction.argument = "new_issuer";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
+}
+
+BOOST_AUTO_TEST_CASE( optional_field_validation_passes_when_optional_holds_correct_value)
+{
+   asset_update_operation operation;
+   operation.new_issuer = account_id_type(1);
+   
+   eq_restriction restriction;
+   restriction.value = account_id_type(1);
+   restriction.argument = "new_issuer";
+   
+   BOOST_CHECK_NO_THROW(restriction.validate(operation));
+}
+
+BOOST_AUTO_TEST_CASE( optional_field_validation_fails_when_optional_holds_incorrect_value)
+{
+   asset_update_operation operation;
+   operation.new_issuer = account_id_type(2);
+   
+   eq_restriction restriction;
+   restriction.value = account_id_type(1);
+   restriction.argument = "new_issuer";
+   
+   BOOST_CHECK_THROW(restriction.validate(operation), fc::exception);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( custom_authority_utils )
