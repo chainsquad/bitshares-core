@@ -123,29 +123,6 @@ struct optional_unwrapper_action_decorator
       action(member);
    }
 };
-
-template <typename Action>
-class operation_member_visitor
-{
-public:
-   operation_member_visitor(const std::string& member_name,  const Action& action)
-   : m_member_name(member_name)
-   , m_action(action)
-   {}
-   
-   typedef void result_type;
-   
-   template <typename Operation>
-   void operator () (const Operation& op) const
-   {
-      member_visitor<Operation, optional_unwrapper_action_decorator<Action>> vistor(m_member_name,
-      fc::reflector<Operation>::visit(vistor);
-   }
-   
-private:
-   const std::string m_member_name;
-   Action m_action;
-};
    
 struct number_to_integer
 {
