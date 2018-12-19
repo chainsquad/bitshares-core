@@ -1211,7 +1211,7 @@ public:
                                               vector<restriction_v2> restrictions)
    { try {
       custom_authority_update_operation op;
-      op.custom_id = auth;
+      op.custom_authority_to_update = auth;
       op.enabled = enabled;
       op.valid_from = valid_from;
       op.valid_to = valid_to;
@@ -1229,7 +1229,7 @@ public:
    signed_transaction delete_custom_authority(object_id_type auth)
    { try {
       custom_authority_delete_operation op;
-      op.custom_id = auth;
+      op.custom_authority_to_update = auth;
       
       signed_transaction tx;
       tx.operations = {op};

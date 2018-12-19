@@ -40,7 +40,7 @@ namespace graphene { namespace chain {
          uint32_t price_per_k_unit = 100; ///< units = valid seconds * items in auth * items in restrictions
       };
 
-      asset                           fee; // TODO: defer fee to expiration / update / removal ?
+      asset                           fee;
       account_id_type                 account;
       bool                            enabled;
       time_point_sec                  valid_from;
@@ -67,9 +67,11 @@ namespace graphene { namespace chain {
          uint32_t price_per_k_unit = 100; ///< units = valid seconds * items in auth * items in restrictions
       };
 
-      asset                           fee; // TODO: defer fee to expiration / update / removal ?
+      object_id_type                  custom_authority_to_update;
+      
+      asset                           fee;
       account_id_type                 account;
-      object_id_type                  custom_id;
+      
       bool                            enabled;
       time_point_sec                  valid_from;
       time_point_sec                  valid_to;
@@ -95,9 +97,9 @@ namespace graphene { namespace chain {
    {
       struct fee_parameters_type { uint64_t fee =  GRAPHENE_BLOCKCHAIN_PRECISION; };
 
-      asset fee; // TODO: defer fee to expiration / update / removal ?
+      object_id_type custom_authority_to_update;
       
-      object_id_type custom_id;
+      asset fee;
       account_id_type account;
 
       account_id_type fee_payer()const { return account; }
@@ -122,6 +124,7 @@ FC_REFLECT( graphene::chain::custom_authority_create_operation,
           )
 
 FC_REFLECT( graphene::chain::custom_authority_update_operation,
+            (custom_authority_to_update)
             (fee)
             (account)
             (enabled)
@@ -132,4 +135,8 @@ FC_REFLECT( graphene::chain::custom_authority_update_operation,
             (extensions)
            )
 
-FC_REFLECT( graphene::chain::custom_authority_delete_operation, (account) )
+FC_REFLECT( graphene::chain::custom_authority_delete_operation,
+            (custom_authority_to_update)
+            (fee)
+            (account)
+           )

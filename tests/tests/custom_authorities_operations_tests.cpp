@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(delete_custom_authority) {
       
       {
          custom_authority_delete_operation op;
-         op.custom_id = authorities.front().id;
+         op.custom_authority_to_update = authorities.front().id;
          
          trx.operations.push_back(op);
          trx.validate();
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(transaction_fails_with_authorities_installed) {
       {
          custom_authority_delete_operation op;
          op.account = dan.id;
-         op.custom_id = authorities.front().id;
+         op.custom_authority_to_update = authorities.front().id;
          
          trx.operations.push_back(op);
          trx.validate();
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_authorities_installed) {
       {
          custom_authority_delete_operation op;
          op.account = dan.id;
-         op.custom_id = authorities.front().id;
+         op.custom_authority_to_update = authorities.front().id;
          
          trx.operations.push_back(op);
          trx.validate();
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_one_authority_passed_and_one_failed
       {
          custom_authority_delete_operation op;
          op.account = dan.id;
-         op.custom_id = authorities.front().id;
+         op.custom_authority_to_update = authorities.front().id;
          
          trx.operations.push_back(op);
          trx.validate();
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(transaction_fails_with_one_authority_failed_and_one_disable
       {
          custom_authority_delete_operation op;
          op.account = dan.id;
-         op.custom_id = authorities.front().id;
+         op.custom_authority_to_update = authorities.front().id;
          
          trx.operations.push_back(op);
          trx.validate();

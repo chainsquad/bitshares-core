@@ -61,7 +61,7 @@ void_result custom_authority_update_evaluator::do_apply(const custom_authority_u
 { try {
    database& d = db();
    
-   d.modify( d.get<custom_authority_object>(op.custom_id), [&]( custom_authority_object& obj ){
+   d.modify( d.get<custom_authority_object>(op.custom_authority_to_update), [&]( custom_authority_object& obj ){
       obj.account        = op.account;
       obj.enabled        = op.enabled;
       obj.valid_from     = op.valid_from;
@@ -82,7 +82,7 @@ void_result custom_authority_delete_evaluator::do_apply(const custom_authority_d
 { try {
    database& d = db();
 
-   d.remove(d.get<custom_authority_object>(op.custom_id));
+   d.remove(d.get<custom_authority_object>(op.custom_authority_to_update));
    
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }

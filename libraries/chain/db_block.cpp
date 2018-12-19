@@ -59,6 +59,21 @@ namespace {
       return result;
    }
    
+   flat_set< account_id_type > get_required_accounts( const operation& op )
+   {
+      flat_set<account_id_type> required_accounts;
+      
+      flat_set<account_id_type> active_accounts;
+      flat_set<account_id_type> owner_accounts;
+      vector<authority>  other_authorities;
+      
+      operation_get_required_authorities(op, active_accounts, owner_accounts, other_authorities);
+      
+      required_accounts.insert(active_accounts.begin(), active_accounts.end());
+      required_accounts.insert(owner_accounts.begin(), owner_accounts.end());
+      
+      return required_accounts;
+   }
 }
    
 bool database::is_known_block( const block_id_type& id )const
@@ -651,26 +666,9 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
    const chain_parameters& chain_parameters = get_global_properties().parameters;
    eval_state._trx = &trx;
 
-   if( !(skip & (skip_transaction_signatures | skip_authority_check) ) )
-   {
-      auto get_active = [&]( account_id_type id ) { return &id(*this).active; };
-      auto get_owner  = [&]( account_id_type id ) { return &id(*this).owner;  };
-      trx.verify_authority( chain_id, get_active, get_owner, get_global_properties().parameters.max_authority_depth );
-   }
-   
    for (auto& op: trx.operations)
    {
-      flat_set<account_id_type> required_accounts;
-      
-      flat_set<account_id_type> active_accounts;
-      flat_set<account_id_type> owner_accounts;
-      vector<authority>  other_authorities;
-      
-      operation_get_required_authorities(op, active_accounts, owner_accounts, other_authorities);
-      
-      required_accounts.insert(active_accounts.begin(), active_accounts.end());
-      required_accounts.insert(owner_accounts.begin(), owner_accounts.end());
-      
+      auto required_accounts = get_required_accounts(op);
       for (auto& account_id: required_accounts)
       {
          auto custom_authorities = get_custom_authorities_by_account(account_id);
@@ -684,6 +682,13 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
          
          FC_ASSERT(operation_validated, "Operation was not validated by any custom authority.");
       }
+   }
+   
+   if( !(skip & (skip_transaction_signatures | skip_authority_check) ) )
+   {
+      auto get_active = [&]( account_id_type id ) { return &id(*this).active; };
+      auto get_owner  = [&]( account_id_type id ) { return &id(*this).owner;  };
+      trx.verify_authority( chain_id, get_active, get_owner, get_global_properties().parameters.max_authority_depth );
    }
    
    //Skip all manner of expiration and TaPoS checking if we're on block 1; It's impossible that the transaction is
@@ -806,6 +811,27 @@ vector< custom_authority_object > database::get_custom_authorities_by_account( a
    }
    
    return result;
+}
+   
+void database::verify_custom_authorities( const transaction& trx )const
+{
+   for (auto& op: trx.operations)
+   {
+      auto required_accounts = get_required_accounts(op);
+      for (auto& account_id: required_accounts)
+      {
+         auto custom_authorities = get_custom_authorities_by_account(account_id);
+         custom_authorities = remove_disabled_custom_authorities(custom_authorities);
+         
+         bool operation_validated = custom_authorities.empty();
+         for (auto& custom_auth: custom_authorities)
+         {
+            operation_validated |= custom_auth.validate(op, head_block_time());
+         }
+         
+         FC_ASSERT(operation_validated, "Operation was not validated by any custom authority.");
+      }
+   }
 }
 
 } }

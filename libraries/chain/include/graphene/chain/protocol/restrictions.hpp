@@ -98,13 +98,13 @@ struct base_list_restriction
 template <typename Action>
 struct base_comparision_restriction
 {
-   uint64_t value;
+   unsigned_int value;
    std::string argument;
    
    template <typename Operation>
    void validate( const Operation& op ) const
    {
-      Action action(value);
+      Action action(value.value);
       member_visitor<Operation, optional_unwrapper_action_decorator<Action>> visitor(argument, optional_unwrapper_action_decorator<Action>(action), op);
       fc::reflector<Operation>::visit(visitor);
    }
@@ -359,8 +359,7 @@ struct attribute_assert
    }
 };
     
-   typedef fc::static_variant</*lt_restriction,*/
-                           eq_restriction,
+typedef fc::static_variant<eq_restriction,
                            neq_restriction,
                            any_restriction,
                            none_restriction,

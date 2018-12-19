@@ -832,22 +832,55 @@ class wallet_api
                                                        string registrar_account,
                                                        string referrer_account,
                                                        bool broadcast = false);
-    
+   
+      /**
+       * Creates custom authority object bound to specified account
+       *
+       * @param account the id of the account to bind custom authority to
+       * @param operation_type id of the operation type to create custom authority for
+       * @param valid_from time point since what authority is valid
+       * @param valid_to time point till what authority is valid
+       * @param restrictions restrictions list for operation arguments
+       * @returns the signed transaction creating custom authority
+       */
       signed_transaction create_custom_authority(account_id_type account,
                                                  int operation_type,
                                                  time_point_sec valid_from,
                                                  time_point_sec valid_to,
                                                  vector<restriction_v2> restrictions);
-    
+   
+      /**
+       * Lists custom authorities bound to specified account
+       *
+       * @param account the id of the account to list custom authorities for
+       * @returns list of custom authorities bound to account
+       */
       vector<custom_authority_object> list_custom_authorities(account_id_type account);
-    
+   
+      /**
+       * Updates custom authority specified y id
+       *
+       * @param auth id of the authority to update
+       * @param operation_type id of the operation type to create custom authority for
+       * @param enabled flag specifing if the authority is enabled or not
+       * @param valid_from time point since what authority is valid
+       * @param valid_to time point till what authority is valid
+       * @param restrictions restrictions list for operation arguments
+       * @returns the signed transaction updating custom authority
+       */
       signed_transaction update_custom_authority(object_id_type auth,
                                                  int operation_type,
                                                  bool enabled,
                                                  time_point_sec valid_from,
                                                  time_point_sec valid_to,
                                                  vector<restriction_v2> restrictions);
-    
+   
+      /**
+       * Deletes custom authority specified by id
+       *
+       * @param auth id of the authority to delete
+       * @returns the signed transaction deleting custom authority
+       */
       signed_transaction delete_custom_authority(object_id_type auth);
     
 
