@@ -39,8 +39,6 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities) {
    try {
       auto dan = create_account("dan");
       
-      generate_block();
-      
       BOOST_CHECK(db.get_custom_authorities_by_account(dan.id).empty());
    } catch (fc::exception &e) {
       edump((e.to_detail_string()));
@@ -52,9 +50,6 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities_but_w
    try {
       auto dan = create_account("dan");
       auto sam = create_account("sam");
-      
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
       
       custom_authority_create_operation op;
       op.account = sam.id;
@@ -85,9 +80,6 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities_but_w
 BOOST_AUTO_TEST_CASE(create_custom_authority_operation_) {
    try {
       auto dan = create_account("dan");
-
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
 
       custom_authority_create_operation op;
       op.account = dan.id;
@@ -130,9 +122,6 @@ BOOST_AUTO_TEST_CASE(create_custom_authority_operation_) {
 BOOST_AUTO_TEST_CASE(delete_custom_authority) {
    try {
       auto dan = create_account("dan");
-      
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
       
       custom_authority_create_operation op;
       op.account = dan.id;
@@ -178,9 +167,6 @@ BOOST_AUTO_TEST_CASE(transaction_passes_without_authorities_installed) {
    try {
       auto dan = create_account("dan");
       
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
-      
       custom_authority_create_operation op;
       op.account = dan.id;
       op.enabled = true;
@@ -202,9 +188,6 @@ BOOST_AUTO_TEST_CASE(transaction_passes_without_authorities_installed) {
 BOOST_AUTO_TEST_CASE(transaction_fails_with_authorities_installed) {
    try {
       auto dan = create_account("dan");
-      
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
       
       custom_authority_create_operation op;
       op.account = dan.id;
@@ -244,9 +227,6 @@ BOOST_AUTO_TEST_CASE(transaction_fails_with_authorities_installed) {
 BOOST_AUTO_TEST_CASE(transaction_passes_with_authorities_installed) {
    try {
       auto dan = create_account("dan");
-      
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
       
       {
          custom_authority_create_operation op;
@@ -288,9 +268,6 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_authorities_installed) {
 BOOST_AUTO_TEST_CASE(transaction_passes_with_one_authority_passed_and_one_failed) {
    try {
       auto dan = create_account("dan");
-      
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
       
       {
          custom_authority_create_operation op; //should pass for this authority
@@ -347,9 +324,6 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_one_authority_passed_and_one_failed
 BOOST_AUTO_TEST_CASE(transaction_fails_with_one_authority_failed_and_one_disabled) {
    try {
       auto dan = create_account("dan");
-      
-      generate_block();
-      fc::usleep(fc::milliseconds(2000));
       
       {
          custom_authority_create_operation op; //should pass for this authority
