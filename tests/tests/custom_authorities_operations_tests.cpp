@@ -33,7 +33,26 @@ using namespace graphene::chain;
 using namespace graphene::chain::test;
 using namespace graphene::app;
 
-BOOST_FIXTURE_TEST_SUITE( custom_authorities_operations, database_fixture )
+struct custom_authorities_operations_fixture: database_fixture
+{
+   void create_custom_authority(const account_id_type& account, bool enabled, int operation_type)
+   {
+      custom_authority_create_operation op; 
+      op.account = account;
+      op.enabled = enabled;
+      op.valid_from = db.head_block_time() - 1;
+      op.valid_to = db.head_block_time() + 20;
+      op.operation_type = operation_type;
+      
+      trx.operations.push_back(op);
+      trx.validate();
+      
+      db.push_transaction(trx, ~0);
+      trx.operations.clear();
+   }
+};
+
+BOOST_FIXTURE_TEST_SUITE( custom_authorities_operations, custom_authorities_operations_fixture )
 
 BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities) {
    try {
@@ -51,23 +70,7 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities_but_w
       auto dan = create_account("dan");
       auto sam = create_account("sam");
       
-      custom_authority_create_operation op;
-      op.account = sam.id;
-      op.enabled = true;
-      op.valid_from = time_point_sec(1);
-      op.valid_to = time_point_sec(2);
-      op.operation_type = operation_type_id_from_operation_type<transfer_operation>::value;
-      
-      eq_restriction rest;
-      rest.argument = "amount";
-      rest.value = asset(100);
-      
-      op.restrictions = {rest};
-      
-      trx.operations.push_back(op);
-      trx.validate();
-      processed_transaction ptx = db.push_transaction(trx, ~0);
-      trx.operations.clear();
+      create_custom_authority(sam.id, true, operation_type_id_from_operation_type<transfer_operation>::value);
       
       auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(0, authorities.size());
@@ -77,7 +80,7 @@ BOOST_AUTO_TEST_CASE(get_custom_authorities_by_account_without_authorities_but_w
    }
 }
 
-BOOST_AUTO_TEST_CASE(create_custom_authority_operation_) {
+BOOST_AUTO_TEST_CASE(create_custom_authority_operation_adds_authority_to_db) {
    try {
       auto dan = create_account("dan");
 
@@ -96,7 +99,8 @@ BOOST_AUTO_TEST_CASE(create_custom_authority_operation_) {
 
       trx.operations.push_back(op);
       trx.validate();
-      processed_transaction ptx = db.push_transaction(trx, ~0);
+      
+      db.push_transaction(trx, ~0);
       trx.operations.clear();
       
       auto authorities = db.get_custom_authorities_by_account(dan.id);
@@ -228,20 +232,7 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_authorities_installed) {
    try {
       auto dan = create_account("dan");
       
-      {
-         custom_authority_create_operation op;
-         op.account = dan.id;
-         op.enabled = true;
-         op.valid_from = db.head_block_time() - 1;
-         op.valid_to = db.head_block_time() + 2;
-         op.operation_type = operation_type_id_from_operation_type<custom_authority_delete_operation>::value;
-         
-         trx.operations.push_back(op);
-         trx.validate();
-         
-         db.push_transaction(trx, ~0);
-         trx.operations.clear();
-      }
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<custom_authority_delete_operation>::value);
       
       auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(1, authorities.size());
@@ -269,35 +260,8 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_one_authority_passed_and_one_failed
    try {
       auto dan = create_account("dan");
       
-      {
-         custom_authority_create_operation op; //should pass for this authority
-         op.account = dan.id;
-         op.enabled = true;
-         op.valid_from = db.head_block_time() - 1;
-         op.valid_to = db.head_block_time() + 20;
-         op.operation_type = operation_type_id_from_operation_type<custom_authority_create_operation>::value;
-         
-         trx.operations.push_back(op);
-         trx.validate();
-         
-         db.push_transaction(trx, ~0);
-         trx.operations.clear();
-      }
-      
-      {
-         custom_authority_create_operation op; //should pass for this authority
-         op.account = dan.id;
-         op.enabled = true;
-         op.valid_from = db.head_block_time() - 1;
-         op.valid_to = db.head_block_time() + 20;
-         op.operation_type = operation_type_id_from_operation_type<custom_authority_delete_operation>::value;
-
-         trx.operations.push_back(op);
-         trx.validate();
-
-         db.push_transaction(trx, ~0);
-         trx.operations.clear();
-      }
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<custom_authority_create_operation>::value);
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<custom_authority_delete_operation>::value);
       
       auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE(!authorities.empty());
@@ -324,36 +288,9 @@ BOOST_AUTO_TEST_CASE(transaction_passes_with_one_authority_passed_and_one_failed
 BOOST_AUTO_TEST_CASE(transaction_fails_with_one_authority_failed_and_one_disabled) {
    try {
       auto dan = create_account("dan");
-      
-      {
-         custom_authority_create_operation op; //should pass for this authority
-         op.account = dan.id;
-         op.enabled = true;
-         op.valid_from = db.head_block_time() - 1;
-         op.valid_to = db.head_block_time() + 20;
-         op.operation_type = operation_type_id_from_operation_type<custom_authority_create_operation>::value;
-         
-         trx.operations.push_back(op);
-         trx.validate();
-         
-         db.push_transaction(trx, ~0);
-         trx.operations.clear();
-      }
-      
-      {
-         custom_authority_create_operation op; //should pass for this authority
-         op.account = dan.id;
-         op.enabled = false;
-         op.valid_from = db.head_block_time() - 1;
-         op.valid_to = db.head_block_time() + 20;
-         op.operation_type = operation_type_id_from_operation_type<custom_authority_delete_operation>::value;
-         
-         trx.operations.push_back(op);
-         trx.validate();
-         
-         db.push_transaction(trx, ~0);
-         trx.operations.clear();
-      }
+   
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<custom_authority_create_operation>::value);
+      create_custom_authority(dan.id, false, operation_type_id_from_operation_type<custom_authority_delete_operation>::value);
       
       auto authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE(!authorities.empty());

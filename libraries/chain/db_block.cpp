@@ -45,7 +45,7 @@
 namespace graphene { namespace chain {
 
 namespace {
-   vector< custom_authority_object > remove_disabled_custom_authorities( const vector< custom_authority_object >& custom_authorities )
+   vector< custom_authority_object > filter_enabled_custom_authorities( const vector< custom_authority_object >& custom_authorities )
    {
       vector< custom_authority_object > result;
       for (auto& auth: custom_authorities)
@@ -672,7 +672,7 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
       for (auto& account_id: required_accounts)
       {
          auto custom_authorities = get_custom_authorities_by_account(account_id);
-         custom_authorities = remove_disabled_custom_authorities(custom_authorities);
+         custom_authorities = filter_enabled_custom_authorities(custom_authorities);
          
          bool operation_validated = custom_authorities.empty();
          for (auto& custom_auth: custom_authorities)
@@ -821,7 +821,7 @@ void database::verify_custom_authorities( const transaction& trx )const
       for (auto& account_id: required_accounts)
       {
          auto custom_authorities = get_custom_authorities_by_account(account_id);
-         custom_authorities = remove_disabled_custom_authorities(custom_authorities);
+         custom_authorities = filter_enabled_custom_authorities(custom_authorities);
          
          bool operation_validated = custom_authorities.empty();
          for (auto& custom_auth: custom_authorities)
