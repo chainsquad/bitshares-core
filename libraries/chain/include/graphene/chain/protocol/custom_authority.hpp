@@ -46,7 +46,6 @@ namespace graphene { namespace chain {
       time_point_sec                  valid_from;
       time_point_sec                  valid_to;
       unsigned_int                    operation_type;
-      authority                       auth;
       vector<restriction_v2>          restrictions;
 
       empty_extensions_type           extensions;
@@ -75,11 +74,12 @@ namespace graphene { namespace chain {
       time_point_sec                  valid_from;
       time_point_sec                  valid_to;
       unsigned_int                    operation_type;
-      authority                       auth;
       vector<restriction_v2>          restrictions;
       
       uint64_t                        delta_units; // to calculate fee, it will be validated in evaluator
                                                    // Note: if start was in the past, when updating, used fee should be deducted
+      
+      empty_extensions_type           extensions;
 
       account_id_type fee_payer()const { return account; }
       void            validate()const;
@@ -117,10 +117,19 @@ FC_REFLECT( graphene::chain::custom_authority_create_operation,
             (valid_from)
             (valid_to)
             (operation_type)
-            (auth)
             (restrictions)
             (extensions)
           )
 
-FC_REFLECT( graphene::chain::custom_authority_update_operation, (account) )
+FC_REFLECT( graphene::chain::custom_authority_update_operation,
+            (fee)
+            (account)
+            (enabled)
+            (valid_from)
+            (valid_to)
+            (operation_type)
+            (restrictions)
+            (extensions)
+           )
+
 FC_REFLECT( graphene::chain::custom_authority_delete_operation, (account) )

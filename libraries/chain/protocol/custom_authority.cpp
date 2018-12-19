@@ -65,7 +65,6 @@ share_type custom_authority_create_operation::calculate_fee( const fee_parameter
    {
       share_type unit_fee = k.price_per_k_unit;
       unit_fee *= (valid_to - valid_from).to_seconds();
-      unit_fee *= auth.num_auths();
       uint64_t restriction_units = 0;
       for( const auto& r : restrictions )
       {
@@ -90,7 +89,6 @@ void custom_authority_create_operation::validate()const
               "Can not create custom authority for special accounts" );
 
    FC_ASSERT( valid_from < valid_to, "valid_from must be earlier than valid_to" );
-   FC_ASSERT( auth.address_auths.size() == 0, "Address auth is not supported" );
    
    for( const auto& r : restrictions )
    {
