@@ -271,5 +271,53 @@ template <> inline void is_type_supported_by_restriction<type>() {} \
    GRAPHENE_RESTRICTION_TYPE(flat_set<public_key_type>);
 
 #undef GRAPHENE_RESTRICTION_TYPE
-
+   
+struct units_calculator_visitor
+{
+   typedef uint64_t result_type;
+   
+   template<typename T>
+   inline result_type operator()( const T& t )
+   {
+      return 1;
+   }
+   
+   inline result_type operator()( const fc::sha256& t )
+   {
+      return 4;
+   }
+   
+   inline result_type operator()( const public_key_type& t )
+   {
+      return 4;
+   }
+   
+   inline result_type operator()( const string& t )
+   {
+      return ( t.size() + 7 ) / 8;
+   }
+   
+   template<typename T>
+   inline result_type operator()( const vector<T>& list )
+   {
+      result_type result = 0;
+      for( const auto& item : list )
+      {
+         result += (*this)( item );
+      }
+      return result;
+   }
+   
+   template<typename T>
+   inline result_type operator()( const flat_set<T>& list )
+   {
+      result_type result = 0;
+      for( const auto& item : list )
+      {
+         result += (*this)( item );
+      }
+      return result;
+   }
+};
+   
 } } 

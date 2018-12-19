@@ -71,6 +71,12 @@ struct base_restriction
       member_visitor<Operation, is_type_supported_by_base_restriction> visitor(argument, is_type_supported_by_base_restriction(), Operation());
       fc::reflector<Operation>::visit(visitor);
    }
+   
+   uint64_t get_units()const
+   {
+      units_calculator_visitor visitor;
+      return value.visit(visitor);
+   }
 };
 
 template <typename Action>
@@ -93,6 +99,19 @@ struct base_list_restriction
       member_visitor<Operation, is_type_supported_by_base_list_restriction> visitor(argument, is_type_supported_by_base_list_restriction(), Operation());
       fc::reflector<Operation>::visit(visitor);
    }
+   
+   uint64_t get_units() const
+   {
+      uint64_t result = 0;
+      units_calculator_visitor visitor;
+
+      for ( const auto& value: values )
+      {
+         result += value.visit(visitor);
+      }
+      
+      return result;
+   }
 };
     
 template <typename Action>
@@ -112,6 +131,11 @@ struct base_comparision_restriction
    template <typename Operation>
    void validate() const // should support all arguments of all operations
    {}
+   
+   uint64_t get_units()const
+   {
+      return 1;
+   }
 };
 
 class equal
@@ -356,6 +380,11 @@ struct attribute_assert
    void validate() const
    {
      
+   }
+   
+   uint64_t get_units() const
+   {
+      return 1;
    }
 };
     
