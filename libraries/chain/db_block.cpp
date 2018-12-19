@@ -665,24 +665,8 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
    transaction_evaluation_state eval_state(this);
    const chain_parameters& chain_parameters = get_global_properties().parameters;
    eval_state._trx = &trx;
-
-   for (auto& op: trx.operations)
-   {
-      auto required_accounts = get_required_accounts(op);
-      for (auto& account_id: required_accounts)
-      {
-         auto custom_authorities = get_custom_authorities_by_account(account_id);
-         custom_authorities = filter_enabled_custom_authorities(custom_authorities);
-         
-         bool operation_validated = custom_authorities.empty();
-         for (auto& custom_auth: custom_authorities)
-         {
-            operation_validated |= custom_auth.validate(op, head_block_time());
-         }
-         
-         FC_ASSERT(operation_validated, "Operation was not validated by any custom authority.");
-      }
-   }
+   
+   verify_custom_authorities(trx);
    
    if( !(skip & (skip_transaction_signatures | skip_authority_check) ) )
    {
