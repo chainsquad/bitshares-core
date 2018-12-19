@@ -42,7 +42,6 @@ namespace graphene { namespace chain {
          static const uint8_t type_id  = impl_custom_authority_object_type;
 
          account_id_type                 account;
-         uint32_t                        custom_id;
          bool                            enabled;
          time_point_sec                  valid_from;
          time_point_sec                  valid_to;
@@ -76,7 +75,6 @@ namespace graphene { namespace chain {
 FC_REFLECT_DERIVED( graphene::chain::custom_authority_object,
                     (graphene::db::object),
                     (account)
-                    (custom_id)
                     (enabled)
                     (valid_from)
                     (valid_to)
