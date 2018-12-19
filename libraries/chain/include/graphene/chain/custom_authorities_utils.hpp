@@ -34,13 +34,11 @@
 namespace graphene { namespace chain {
    
 typedef fc::static_variant<
-   bool,
    uint8_t,
    uint16_t,
    uint32_t,
-   asset,
-   account_id_type,
    asset_id_type,
+   account_id_type,
    balance_id_type,
    proposal_id_type,
    fba_accumulator_id_type,
@@ -51,25 +49,21 @@ typedef fc::static_variant<
    committee_member_id_type,
    public_key_type,
    time_point_sec,
+   bool,
    unsigned_int,
-   vector<blind_output>,
-   vector<blind_input>,
    vector<char>,
    string,
+   asset,
    price,
    price_feed,
    share_type,
    vesting_policy_initializer,
    worker_initializer,
-   empty_extensions_type,
    extensions_type,
    future_extensions,
-   authority,
-   account_options,
    vector<predicate>,
+   authority,
    flat_set<account_id_type>,
-   asset_options,
-   bitasset_options,
    flat_set<public_key_type>
    > generic_member;
 
