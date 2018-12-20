@@ -30,7 +30,6 @@
 #include <graphene/elasticsearch/elasticsearch_plugin.hpp>
 #include <graphene/market_history/market_history_plugin.hpp>
 #include <graphene/delayed_node/delayed_node_plugin.hpp>
-#include <graphene/custom_authorities/custom_authorities_plugin.hpp>
 #include <graphene/snapshot/snapshot.hpp>
 #include <graphene/es_objects/es_objects.hpp>
 #include <graphene/grouped_orders/grouped_orders_plugin.hpp>
@@ -80,7 +79,6 @@ int main(int argc, char** argv) {
       auto snapshot_plug = node->register_plugin<snapshot_plugin::snapshot_plugin>();
       auto es_objects_plug = node->register_plugin<es_objects::es_objects_plugin>();
       auto grouped_orders_plug = node->register_plugin<grouped_orders::grouped_orders_plugin>();
-      auto custom_authorities_plug = node->register_plugin<custom_authorities::custom_authorities_plugin>();
 
       try
       {
