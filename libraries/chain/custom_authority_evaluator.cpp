@@ -32,13 +32,14 @@ namespace graphene { namespace chain {
 
 void_result custom_authority_create_evaluator::do_evaluate(const custom_authority_create_operation& op)
 { try {
+   FC_ASSERT(db().head_block_time() > HARDFORK_CORE_1285_TIME, "custom_authority_create_operation should not be executed before HARDFORK_CORE_1285_TIME");
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
 object_id_type custom_authority_create_evaluator::do_apply(const custom_authority_create_operation& op)
 { try {
    database& d = db();
-
+   
    const auto& new_object = d.create<custom_authority_object>( [&op]( custom_authority_object& obj ){
       obj.account        = op.account;
       obj.enabled        = op.enabled;
@@ -54,6 +55,7 @@ object_id_type custom_authority_create_evaluator::do_apply(const custom_authorit
 
 void_result custom_authority_update_evaluator::do_evaluate(const custom_authority_update_operation& op)
 { try {
+   FC_ASSERT(db().head_block_time() > HARDFORK_CORE_1285_TIME, "custom_authority_update_operation should not be executed before HARDFORK_CORE_1285_TIME");
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 
@@ -75,6 +77,7 @@ void_result custom_authority_update_evaluator::do_apply(const custom_authority_u
 
 void_result custom_authority_delete_evaluator::do_evaluate(const custom_authority_delete_operation& op)
 { try {
+   FC_ASSERT(db().head_block_time() > HARDFORK_CORE_1285_TIME, "custom_authority_delete_operation should not be executed before HARDFORK_CORE_1285_TIME");
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (op) ) }
 

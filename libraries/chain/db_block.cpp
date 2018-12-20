@@ -666,7 +666,10 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
    const chain_parameters& chain_parameters = get_global_properties().parameters;
    eval_state._trx = &trx;
    
-   verify_custom_authorities(trx);
+   if( head_block_time() > HARDFORK_CORE_1285_TIME )
+   {
+      verify_custom_authorities(trx);
+   }
    
    if( !(skip & (skip_transaction_signatures | skip_authority_check) ) )
    {
