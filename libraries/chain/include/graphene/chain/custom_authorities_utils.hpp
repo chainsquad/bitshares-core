@@ -272,6 +272,8 @@ template <> inline void is_type_supported_by_restriction<type>() {} \
 
 #undef GRAPHENE_RESTRICTION_TYPE
    
+// TODO: should be discussed with bitshares devs and may be fixed in the future
+// magic numbers were taken from previous implementation
 struct units_calculator_visitor
 {
    typedef uint64_t result_type;
@@ -300,16 +302,18 @@ struct units_calculator_visitor
    template<typename T>
    inline result_type operator()( const vector<T>& list )
    {
-      result_type result = 0;
-      for( const auto& item : list )
-      {
-         result += (*this)( item );
-      }
-      return result;
+      return get_units_for_container(list);
    }
    
    template<typename T>
    inline result_type operator()( const flat_set<T>& list )
+   {
+      return get_units_for_container(list);
+   }
+   
+private:
+   template<typename T>
+   result_type get_units_for_container(const T& list)
    {
       result_type result = 0;
       for( const auto& item : list )

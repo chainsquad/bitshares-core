@@ -134,7 +134,7 @@ struct base_comparision_restriction
    
    uint64_t get_units()const
    {
-      return 1;
+      return units_calculator_visitor()(value);
    }
 };
 
