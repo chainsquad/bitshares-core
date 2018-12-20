@@ -50,6 +50,21 @@ struct custom_authorities_operations_fixture: database_fixture
       db.push_transaction(trx, ~0);
       trx.operations.clear();
    }
+   
+   void update_account( const account_object& account)
+   {
+      trx.operations.clear();
+      
+      account_update_operation op;
+      op.account = account.id;
+      op.active = account.active;
+      
+      trx.operations = {op};
+      trx.validate();
+      
+      db.push_transaction(trx, ~0);
+      trx.clear();
+   }
 };
 
 BOOST_FIXTURE_TEST_SUITE( custom_authorities_operations, custom_authorities_operations_fixture )
@@ -160,6 +175,102 @@ BOOST_AUTO_TEST_CASE(delete_custom_authority) {
       
       authorities = db.get_custom_authorities_by_account(dan.id);
       BOOST_REQUIRE_EQUAL(0, authorities.size());
+      
+   } catch (fc::exception &e) {
+      edump((e.to_detail_string()));
+      throw;
+   }
+}
+
+BOOST_AUTO_TEST_CASE(custom_authority_is_disabled_after_account_update) {
+   try {
+      auto dan = create_account("dan");
+      
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<custom_authority_create_operation>::value);
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<account_update_operation>::value);
+      
+      update_account(dan);
+      
+      auto authorities = db.get_custom_authorities_by_account(dan.id);
+      BOOST_REQUIRE_EQUAL(2, authorities.size());
+      
+      auto auth = authorities[0];
+      BOOST_CHECK(dan.id == auth.account);
+      BOOST_CHECK(operation_type_id_from_operation_type<custom_authority_create_operation>::value == auth.operation_type.value);
+      
+      BOOST_REQUIRE_EQUAL(0, auth.restrictions.size());
+      
+      //authority should be disabled
+      BOOST_CHECK(!auth.enabled);
+      
+      auth = authorities[1];
+      BOOST_CHECK(dan.id == auth.account);
+      BOOST_CHECK(operation_type_id_from_operation_type<account_update_operation>::value == auth.operation_type.value);
+      
+      BOOST_REQUIRE_EQUAL(0, auth.restrictions.size());
+      
+      //authority should be disabled
+      BOOST_CHECK(!auth.enabled);
+      
+   } catch (fc::exception &e) {
+      edump((e.to_detail_string()));
+      throw;
+   }
+}
+
+BOOST_AUTO_TEST_CASE(custom_authority_is_disabled_after_account_update_with_serveral_accounts) {
+   try {
+      auto dan = create_account("dan");
+      
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<custom_authority_create_operation>::value);
+      create_custom_authority(dan.id, true, operation_type_id_from_operation_type<account_update_operation>::value);
+      
+      auto sam = create_account("sam");
+      
+      create_custom_authority(sam.id, true, operation_type_id_from_operation_type<custom_authority_create_operation>::value);
+      create_custom_authority(sam.id, true, operation_type_id_from_operation_type<account_update_operation>::value);
+      
+      update_account(dan);
+      
+      {
+         auto authorities = db.get_custom_authorities_by_account(dan.id);
+         BOOST_REQUIRE_EQUAL(2, authorities.size());
+         
+         auto auth = authorities[0];
+         BOOST_CHECK(dan.id == auth.account);
+         BOOST_CHECK(operation_type_id_from_operation_type<custom_authority_create_operation>::value == auth.operation_type.value);
+         
+         BOOST_REQUIRE_EQUAL(0, auth.restrictions.size());
+         
+         //authority should be disabled
+         BOOST_CHECK(!auth.enabled);
+         
+         auth = authorities[1];
+         BOOST_CHECK(dan.id == auth.account);
+         BOOST_CHECK(operation_type_id_from_operation_type<account_update_operation>::value == auth.operation_type.value);
+         
+         BOOST_REQUIRE_EQUAL(0, auth.restrictions.size());
+         
+         //authority should be disabled
+         BOOST_CHECK(!auth.enabled);
+      }
+      
+      {
+         auto authorities = db.get_custom_authorities_by_account(sam.id);
+         BOOST_REQUIRE_EQUAL(2, authorities.size());
+         
+         auto auth = authorities[0];
+         BOOST_CHECK(sam.id == auth.account);
+         BOOST_CHECK(operation_type_id_from_operation_type<custom_authority_create_operation>::value == auth.operation_type.value);
+         BOOST_REQUIRE_EQUAL(0, auth.restrictions.size());
+         BOOST_CHECK(auth.enabled);
+         
+         auth = authorities[1];
+         BOOST_CHECK(sam.id == auth.account);
+         BOOST_CHECK(operation_type_id_from_operation_type<account_update_operation>::value == auth.operation_type.value);
+         BOOST_REQUIRE_EQUAL(0, auth.restrictions.size());
+         BOOST_CHECK(auth.enabled);
+      }
       
    } catch (fc::exception &e) {
       edump((e.to_detail_string()));

@@ -792,7 +792,7 @@ vector< custom_authority_object > database::get_custom_authorities_by_account( a
    vector<custom_authority_object> result;
    
    auto itr = authority_by_account.find(account);
-   while(itr != authority_by_account.end())
+   while(itr != authority_by_account.end() && (*itr).account == account)
    {
       result.emplace_back(*itr++);
    }

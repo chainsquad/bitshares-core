@@ -34,12 +34,26 @@
 #include <graphene/chain/internal_exceptions.hpp>
 #include <graphene/chain/special_authority.hpp>
 #include <graphene/chain/special_authority_object.hpp>
+#include <graphene/chain/custom_authority_object.hpp>
 #include <graphene/chain/witness_object.hpp>
 #include <graphene/chain/worker_object.hpp>
 
 #include <algorithm>
 
 namespace graphene { namespace chain {
+   
+namespace {
+void disable_account_custom_authorities( database& db, const account_id_type& account )
+{
+   auto custom_authorities = db.get_custom_authorities_by_account(account);
+   for (auto& custom_authority: custom_authorities)
+   {
+      db.modify( db.get<custom_authority_object>(custom_authority.id), []( custom_authority_object& obj ){
+         obj.enabled = false;
+      });
+   }
+}
+}
 
 void verify_authority_accounts( const database& db, const authority& a )
 {
@@ -118,7 +132,6 @@ void verify_account_votes( const database& db, const account_options& options )
       }
    }
 }
-
 
 void_result account_create_evaluator::do_evaluate( const account_create_operation& op )
 { try {
@@ -307,7 +320,7 @@ void_result account_update_evaluator::do_evaluate( const account_update_operatio
 
    if( o.new_options.valid() )
       verify_account_votes( d, *o.new_options );
-
+   
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (o) ) }
 
@@ -366,6 +379,12 @@ void_result account_update_evaluator::do_apply( const account_update_operation& 
       {
          sa.account = o.account;
       } );
+   }
+   
+   bool custom_authorities_should_be_disabled = o.active.valid();
+   if( custom_authorities_should_be_disabled && d.head_block_time() > HARDFORK_CORE_1285_TIME )
+   {
+      disable_account_custom_authorities(d, o.account);
    }
 
    return void_result();
