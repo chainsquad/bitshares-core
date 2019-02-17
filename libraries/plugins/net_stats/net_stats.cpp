@@ -23,6 +23,13 @@
  */
 
 #include <graphene/net_stats/net_stats.hpp>
+#include <graphene/net/node.hpp>
+
+#include <prometheus/exposer.h>
+#include <prometheus/registry.h>
+#include <prometheus/counter.h>
+#include <prometheus/histogram.h>
+
 
 namespace graphene { namespace net_stats {
 
@@ -31,16 +38,74 @@ namespace detail {
 class net_stats_impl {
 public:
     net_stats_impl(net_stats_plugin& _plugin)
-        : _self(_plugin) {}
+        : _self(_plugin) 
+        {
+            exposer  = std::make_shared<prometheus::Exposer>( "127.0.0.1:8080" );
+            registry = std::make_shared<prometheus::Registry>();
+
+            auto& msg_cnt_fam = prometheus::BuildCounter()
+                                    .Name( "p2p_message_cnt" )
+                                    .Help( "How much messages has this node received/transmitted?" )
+                                    .Labels( {} )
+                                    .Register( *registry );
+
+            msg_rx_cnt = &msg_cnt_fam.Add( { {"type", "rx"} } );
+            msg_tx_cnt = &msg_cnt_fam.Add( { {"type", "tx"} } );
+
+            auto& msg_size_hsg_fam = prometheus::BuildHistogram()
+                                    .Name( "p2p_message_size_hsg" )
+                                    .Help( "How much messages with which size were received/transmitted?" )
+                                    .Labels( {} )
+                                    .Register( *registry );
+
+            msg_rx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "rx"} } );
+            msg_tx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "tx"} } );
+
+            exposer->RegisterCollectable( registry );
+        }
     ~net_stats_impl() = default;
 
     net_stats_plugin& _self;
 
     void process_event(const net::network_statistics_event& event) {
         ilog("Network statistic event: type=${type}, size=${size}, peer=${peer}", ("type", event.event_type)("size", event.event_data.size())("peer", event.remote_endpoint));
+        switch( event.event_type )
+        {
+            case net::network_statistics_event::EventType::MessageReceived:
+            {
+                msg_rx_cnt->Increment();  
+
+                msg_rx_size_hsg->Observe( event.event_data.size() );
+
+                break;
+            }
+            case net::network_statistics_event::EventType::MessageSent:
+            {
+                msg_tx_cnt->Increment();
+
+                msg_tx_size_hsg->Observe( event.event_data.size() );
+
+                break;
+            }
+            default:
+                break;
+
+        }
     }
 
 private:
+    // http server to expose prometheus metrics
+    std::shared_ptr<prometheus::Exposer> exposer;
+    // registry for all metric types
+    std::shared_ptr<prometheus::Registry> registry;
+    // p2p message receive counter
+    prometheus::Counter* msg_rx_cnt;
+    // p2p message transmit counter
+    prometheus::Counter* msg_tx_cnt;
+    // p2p msg_rx_size to histogram 
+    prometheus::Histogram* msg_rx_size_hsg;
+    // p2p msg_tx_size to histogram
+    prometheus::Histogram* msg_tx_size_hsg;
 };
 } // end namespace detail
 
@@ -76,6 +141,8 @@ void net_stats_plugin::plugin_startup() {
             my->process_event(copy);
         });
     });
+
+
 }
 
 } }
