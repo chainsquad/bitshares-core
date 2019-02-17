@@ -23,6 +23,12 @@
  */
 
 #include <graphene/net_stats/net_stats.hpp>
+#include <graphene/net/node.hpp>
+
+#include <prometheus/exposer.h>
+#include <prometheus/registry.h>
+#include <prometheus/detail/counter_builder.h>
+
 
 namespace graphene { namespace net_stats {
 
@@ -31,16 +37,51 @@ namespace detail {
 class net_stats_impl {
 public:
     net_stats_impl(net_stats_plugin& _plugin)
-        : _self(_plugin) {}
+        : _self(_plugin) 
+        {
+            exposer  = std::make_shared<prometheus::Exposer>( "127.0.0.1:8080" );
+            registry = std::make_shared<prometheus::Registry>();
+            counter_family = std::make_shared< prometheus::Family<prometheus::Counter> > 
+                             (  
+                                prometheus::BuildCounter()
+                                    .Name( "received_messages_total" )
+                                    .Help( "How much messages has this node received?" )
+                                    .Labels( { { "rcv_msg", "val" } } )
+                                    .Register( *registry )
+                             );
+                          
+            msg_rcv_counter = std::make_shared<prometheus::Counter>( counter_family->Add( { {"label1", "val2"} } ) );
+
+            exposer->RegisterCollectable( registry );
+        }
     ~net_stats_impl() = default;
 
     net_stats_plugin& _self;
 
     void process_event(const net::network_statistics_event& event) {
         ilog("Network statistic event: type=${type}, size=${size}, peer=${peer}", ("type", event.event_type)("size", event.event_data.size())("peer", event.remote_endpoint));
+        switch( event.event_type )
+        {
+            case net::network_statistics_event::EventType::MessageReceived:
+            {
+                msg_rcv_counter->Increment();   
+                break;
+            }
+            default:
+                break;
+
+        }
     }
 
 private:
+    // http server to expose the metrics
+    std::shared_ptr<prometheus::Exposer> exposer;
+    // metrics registry
+    std::shared_ptr<prometheus::Registry> registry;
+    // counter 
+    std::shared_ptr<prometheus::Family<prometheus::Counter> > counter_family;
+    
+    std::shared_ptr<prometheus::Counter> msg_rcv_counter;
 };
 } // end namespace detail
 
@@ -76,6 +117,8 @@ void net_stats_plugin::plugin_startup() {
             my->process_event(copy);
         });
     });
+
+
 }
 
 } }
