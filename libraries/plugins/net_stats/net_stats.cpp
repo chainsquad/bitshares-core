@@ -40,17 +40,16 @@ public:
         : _self(_plugin) 
         {
             exposer  = std::make_shared<prometheus::Exposer>( "127.0.0.1:8080" );
+
             registry = std::make_shared<prometheus::Registry>();
-            counter_family = std::make_shared< prometheus::Family<prometheus::Counter> > 
-                             (  
-                                prometheus::BuildCounter()
+
+            counter_family = &prometheus::BuildCounter()
                                     .Name( "received_messages_total" )
                                     .Help( "How much messages has this node received?" )
                                     .Labels( { { "rcv_msg", "val" } } )
-                                    .Register( *registry )
-                             );
-                          
-            msg_rcv_counter = std::make_shared<prometheus::Counter>( counter_family->Add( { {"label1", "val2"} } ) );
+                                    .Register( *registry );
+
+            msg_rcv_counter = &counter_family->Add( { {"label1", "val2"} } );
 
             exposer->RegisterCollectable( registry );
         }
@@ -78,10 +77,10 @@ private:
     std::shared_ptr<prometheus::Exposer> exposer;
     // metrics registry
     std::shared_ptr<prometheus::Registry> registry;
-    // counter 
-    std::shared_ptr<prometheus::Family<prometheus::Counter> > counter_family;
-    
-    std::shared_ptr<prometheus::Counter> msg_rcv_counter;
+    // mother of all counters
+    prometheus::Family<prometheus::Counter>* counter_family;
+    // counter to track messages received by the node
+    prometheus::Counter* msg_rcv_counter;
 };
 } // end namespace detail
 

@@ -5,10 +5,20 @@ add_library( graphene_net_stats
         ${HEADERS}
            )
 
-LINK_DIRECTORIES( /usr/local/lib )           
-target_link_libraries( graphene_net_stats graphene_chain graphene_app libprometheus-cpp-core.so libprometheus-cpp-pull.so libprometheus-push.so )
+link_directories( /usr/local/lib/ )
+
+target_link_libraries( graphene_net_stats 
+   PUBLIC graphene_chain 
+   PUBLIC graphene_app 
+   PUBLIC libprometheus-cpp-core.so
+   PUBLIC libprometheus-cpp-pull.so
+   PUBLIC libprometheus-cpp-push.so
+)
+
 target_include_directories( graphene_net_stats
-                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" )
+   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
+   PUBLIC "/usr/local/include/prometheus"
+)
 
 if(MSVC)
   set_source_files_properties(net_stats.cpp PROPERTIES COMPILE_FLAGS "/bigobj" )
