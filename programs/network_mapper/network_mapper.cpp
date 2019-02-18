@@ -69,6 +69,11 @@ public:
     _connection->send_message(hello);
   }
 
+  void on_message_sent(fc::optional<fc::ip::endpoint> remote_endpoint, const graphene::net::message &sent_message)
+  {
+      //_on_statistics_event(network_statistics_event(network_statistics_event::MessageSent, remote_endpoint, sent_message.data));
+  }
+
   void on_message(graphene::net::peer_connection* originating_peer,
                   const graphene::net::message& received_message) override
   {
