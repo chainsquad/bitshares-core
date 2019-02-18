@@ -29,7 +29,10 @@
 
 #include <graphene/chain/protocol/types.hpp>
 
+#include <boost/signals2.hpp>
+
 #include <list>
+#include <vector>
 
 namespace graphene { namespace net {
 
@@ -52,6 +55,23 @@ namespace graphene { namespace net {
     fc::time_point received_time;
     fc::time_point validated_time;
     node_id_t originating_peer;
+  };
+
+  /// A struct for network statistics generation, used to record what messages are sent and received when
+  struct network_statistics_event {
+    enum EventType {
+        MessageSent,
+        MessageReceived
+    };
+
+    EventType event_type;
+    fc::optional<fc::ip::endpoint> remote_endpoint;
+    const std::vector<char>& event_data;
+    fc::time_point event_time;
+
+    network_statistics_event(EventType event_type, fc::optional<fc::ip::endpoint> remote_endpoint,
+                             const std::vector<char>& event_data, fc::time_point event_time = fc::time_point::now())
+        : event_type(event_type), remote_endpoint(remote_endpoint), event_data(event_data), event_time(event_time) {}
   };
 
    /**
@@ -292,6 +312,17 @@ namespace graphene { namespace net {
 
         void disable_peer_advertising();
         fc::variant_object get_call_statistics() const;
+
+        /**
+         * @brief Subscribe to network statistics events
+         *
+         * Register a callable to be invoked whenever a network statistics event is triggered.
+         *
+         * @param c A callable of the form `void c(const network_statistics_event&)`
+         * @return A boost::signals2::connection object, which may be disconnected to unsubscribe the callable
+         */
+        boost::signals2::connection subscribe_network_stats(std::function<void(const network_statistics_event&)>&& c);
+
       private:
         std::unique_ptr<detail::node_impl, detail::node_impl_deleter> my;
    };
@@ -326,3 +357,6 @@ namespace graphene { namespace net {
 
 FC_REFLECT(graphene::net::message_propagation_data, (received_time)(validated_time)(originating_peer));
 FC_REFLECT( graphene::net::peer_status, (version)(host)(info) );
+FC_REFLECT_ENUM(graphene::net::network_statistics_event::EventType, (MessageSent)(MessageReceived))
+// event_data member intentionally unreflected, as FC does not allow reflecting reference members
+FC_REFLECT(graphene::net::network_statistics_event, (event_type)(remote_endpoint)(event_time))
