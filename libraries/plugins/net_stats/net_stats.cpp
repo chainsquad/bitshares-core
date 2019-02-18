@@ -27,7 +27,8 @@
 
 #include <prometheus/exposer.h>
 #include <prometheus/registry.h>
-#include <prometheus/detail/counter_builder.h>
+#include <prometheus/counter.h>
+#include <prometheus/histogram.h>
 
 
 namespace graphene { namespace net_stats {
@@ -40,16 +41,25 @@ public:
         : _self(_plugin) 
         {
             exposer  = std::make_shared<prometheus::Exposer>( "127.0.0.1:8080" );
-
             registry = std::make_shared<prometheus::Registry>();
 
-            counter_family = &prometheus::BuildCounter()
-                                    .Name( "received_messages_total" )
-                                    .Help( "How much messages has this node received?" )
-                                    .Labels( { { "rcv_msg", "val" } } )
+            auto& msg_cnt_fam = prometheus::BuildCounter()
+                                    .Name( "p2p_message_cnt" )
+                                    .Help( "How much messages has this node received/transmitted?" )
+                                    .Labels( {} )
                                     .Register( *registry );
 
-            msg_rcv_counter = &counter_family->Add( { {"label1", "val2"} } );
+            msg_rx_cnt = &msg_cnt_fam.Add( { {"type", "rx"} } );
+            msg_tx_cnt = &msg_cnt_fam.Add( { {"type", "tx"} } );
+
+            auto& msg_size_hsg_fam = prometheus::BuildHistogram()
+                                    .Name( "p2p_message_size_hsg" )
+                                    .Help( "How much messages with which size were received/transmitted?" )
+                                    .Labels( {} )
+                                    .Register( *registry );
+
+            msg_rx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "rx"} } );
+            msg_tx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "tx"} } );
 
             exposer->RegisterCollectable( registry );
         }
@@ -63,7 +73,18 @@ public:
         {
             case net::network_statistics_event::EventType::MessageReceived:
             {
-                msg_rcv_counter->Increment();   
+                msg_rx_cnt->Increment();  
+
+                msg_rx_size_hsg->Observe( event.event_data.size() );
+
+                break;
+            }
+            case net::network_statistics_event::EventType::MessageSent:
+            {
+                msg_tx_cnt->Increment();
+
+                msg_tx_size_hsg->Observe( event.event_data.size() );
+
                 break;
             }
             default:
@@ -73,14 +94,18 @@ public:
     }
 
 private:
-    // http server to expose the metrics
+    // http server to expose prometheus metrics
     std::shared_ptr<prometheus::Exposer> exposer;
-    // metrics registry
+    // registry for all metric types
     std::shared_ptr<prometheus::Registry> registry;
-    // mother of all counters
-    prometheus::Family<prometheus::Counter>* counter_family;
-    // counter to track messages received by the node
-    prometheus::Counter* msg_rcv_counter;
+    // p2p message receive counter
+    prometheus::Counter* msg_rx_cnt;
+    // p2p message transmit counter
+    prometheus::Counter* msg_tx_cnt;
+    // p2p msg_rx_size to histogram 
+    prometheus::Histogram* msg_rx_size_hsg;
+    // p2p msg_tx_size to histogram
+    prometheus::Histogram* msg_tx_size_hsg;
 };
 } // end namespace detail
 
