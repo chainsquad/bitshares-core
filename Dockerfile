@@ -32,7 +32,20 @@ RUN \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-ADD . /bitshares-core
+# Install prometheus-cpp
+
+WORKDIR /
+RUN \
+   git clone https://github.com/jupp0r/prometheus-cpp && \
+   cd /prometheus-cpp && \
+   git submodule update --init --recursive && \
+   cmake -DBUILD_SHARED_LIBS=ON . && \
+   make && \
+   make install && \
+   cd / && \
+   rm -rf /prometheus-cpp
+
+ADD / /bitshares-core
 WORKDIR /bitshares-core
 
 # Compile

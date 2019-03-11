@@ -1,8 +1,8 @@
 file(GLOB HEADERS "include/graphene/net_stats/*.hpp")
 
 add_library( graphene_net_stats
-        net_stats.cpp
-        ${HEADERS}
+             net_stats.cpp
+             ${HEADERS}
            )
 
 link_directories( /usr/local/lib/ )
