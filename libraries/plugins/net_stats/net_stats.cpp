@@ -30,6 +30,7 @@
 #include <prometheus/counter.h>
 #include <prometheus/histogram.h>
 
+#include <boost/bind.hpp>
 
 namespace graphene { namespace net_stats {
 
@@ -40,8 +41,8 @@ public:
     net_stats_impl(net_stats_plugin& _plugin)
         : _self(_plugin) 
         {
-            exposer  = std::make_shared<prometheus::Exposer>( "127.0.0.1:8080" );
             registry = std::make_shared<prometheus::Registry>();
+
 
             auto& msg_cnt_fam = prometheus::BuildCounter()
                                     .Name( "p2p_message_cnt" )
@@ -52,23 +53,41 @@ public:
             msg_rx_cnt = &msg_cnt_fam.Add( { {"type", "rx"} } );
             msg_tx_cnt = &msg_cnt_fam.Add( { {"type", "tx"} } );
 
+
+
             auto& msg_size_hsg_fam = prometheus::BuildHistogram()
-                                    .Name( "p2p_message_size_hsg" )
-                                    .Help( "How much messages with which size were received/transmitted?" )
-                                    .Labels( {} )
-                                    .Register( *registry );
+                                        .Name( "p2p_message_size_hsg" )
+                                        .Help( "How much messages with which size were received/transmitted?" )
+                                        .Labels( {} )
+                                        .Register( *registry );
+            
+            prometheus::Histogram::BucketBoundaries msg_size_boundaries;
+            for( uint16_t bucket = 256; bucket <= 4096; bucket += 256 )
+                msg_size_boundaries.push_back( bucket );
 
-            msg_rx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "rx"} } );
-            msg_tx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "tx"} } );
+            msg_rx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "rx"} }, msg_size_boundaries );
+            msg_tx_size_hsg = &msg_size_hsg_fam.Add( { {"type", "tx"} }, msg_size_boundaries );
 
-            exposer->RegisterCollectable( registry );
+
+
+            auto& block_latency_hsg_fam = prometheus::BuildHistogram()
+                                                        .Name( "p2p_block_latency_hsg" )
+                                                        .Help( "How much block messages with which latency were received?" )
+                                                        .Labels( {} )
+                                                        .Register( *registry );
+            
+            prometheus::Histogram::BucketBoundaries block_latency_boundaries;
+            for( double bucket = 0.0; bucket < 10000; bucket += 500 )
+                block_latency_boundaries.push_back( bucket );
+
+            block_latency_hsg = &block_latency_hsg_fam.Add( {}, block_latency_boundaries );            
         }
     ~net_stats_impl() = default;
 
     net_stats_plugin& _self;
 
     void process_event(const net::network_statistics_event& event) {
-        ilog("Network statistic event: type=${type}, size=${size}, peer=${peer}", ("type", event.event_type)("size", event.event_data.size())("peer", event.remote_endpoint));
+        //ilog("Network statistic event: type=${type}, size=${size}, peer=${peer}", ("type", event.event_type)("size", event.event_data.size())("peer", event.remote_endpoint));
         switch( event.event_type )
         {
             case net::network_statistics_event::EventType::MessageReceived:
@@ -93,19 +112,31 @@ public:
         }
     }
 
-private:
+    void on_block_handled( int64_t block_latency ) 
+    {
+        // to not publish block_latency while in sync mode
+        static const int64_t MAX_LATENCY = 5 * 60 * 1000;
+        
+        if( block_latency >= MAX_LATENCY )
+            block_latency_hsg->Observe( block_latency );
+    }
+
+    std::string exposer_endpoint = "127.0.0.1:8080";
     // http server to expose prometheus metrics
     std::shared_ptr<prometheus::Exposer> exposer;
     // registry for all metric types
     std::shared_ptr<prometheus::Registry> registry;
-    // p2p message receive counter
+private:
+    // p2p received message counter
     prometheus::Counter* msg_rx_cnt;
-    // p2p message transmit counter
+    // p2p transmitted message counter
     prometheus::Counter* msg_tx_cnt;
-    // p2p msg_rx_size to histogram 
+    // p2p received message size histogram 
     prometheus::Histogram* msg_rx_size_hsg;
-    // p2p msg_tx_size to histogram
+    // p2p transmitted message size histogram
     prometheus::Histogram* msg_tx_size_hsg;
+    // p2p block latency
+    prometheus::Histogram* block_latency_hsg;
 };
 } // end namespace detail
 
@@ -125,10 +156,20 @@ std::string net_stats_plugin::plugin_description()const {
 
 void net_stats_plugin::plugin_set_program_options(boost::program_options::options_description& cli,
                                                   boost::program_options::options_description& cfg) {
-//    cli.add_options()
-//            ("net_stats_option", boost::program_options::value<std::string>(), "net_stats option")
-//            ;
-//    cfg.add(cli);
+    cli.add_options()
+         ("net-stats-exposer-endpoint", boost::program_options::value<std::string>(),
+                "net stats metric exposer endpoint (default 127.0.0.1:8080)");
+
+    cfg.add(cli);
+}
+
+void net_stats_plugin::plugin_initialize(const boost::program_options::variables_map& options)
+{
+   if( options.count( "net-stats-exposer-endpoint" ) ) {
+      my->exposer_endpoint = options["net-stats-exposer-endpoint"].as<std::string>();
+   }
+   my->exposer = std::make_shared<prometheus::Exposer>( my->exposer_endpoint );
+   my->exposer->RegisterCollectable( my->registry );
 }
 
 void net_stats_plugin::plugin_startup() {
@@ -141,8 +182,9 @@ void net_stats_plugin::plugin_startup() {
             my->process_event(copy);
         });
     });
-
-
+    // register block_handled signal to emit the block_latency
+    // TODO save return for disconnect
+    app().block_handled.connect( boost::bind( &detail::net_stats_impl::on_block_handled, &*my, _1 ) );
 }
 
 } }
