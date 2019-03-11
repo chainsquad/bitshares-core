@@ -4,20 +4,19 @@ add_library( graphene_net_stats
              net_stats.cpp
              ${HEADERS}
            )
-
-link_directories( /usr/local/lib/ )
+find_package(prometheus-cpp REQUIRED core push pull)
 
 target_link_libraries( graphene_net_stats 
    PUBLIC graphene_chain 
    PUBLIC graphene_app 
-   PUBLIC libprometheus-cpp-core.so
-   PUBLIC libprometheus-cpp-pull.so
-   PUBLIC libprometheus-cpp-push.so
+   PUBLIC prometheus-cpp::core
+   PUBLIC prometheus-cpp::push
+   PUBLIC prometheus-cpp::pull
 )
 
 target_include_directories( graphene_net_stats
    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
-   PUBLIC "/usr/local/include/prometheus"
+   PUBLIC "${prometheus-cpp_INCLUDE_DIR}"
 )
 
 if(MSVC)
