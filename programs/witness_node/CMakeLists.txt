@@ -11,7 +11,7 @@ endif()
 
 list( APPEND WITNESS_NODE_PLUGINS graphene_delayed_node graphene_account_history graphene_elasticsearch
                                   graphene_market_history graphene_grouped_orders graphene_witness
-                                  graphene_snapshot graphene_es_objects graphene_net_stats )
+                                  graphene_snapshot graphene_es_objects graphene_net_stats graphene_zeromq )
 
 # We have to link against graphene_debug_witness because deficiency in our API infrastructure doesn't allow plugins to be fully abstracted #246
 target_link_libraries( witness_node
