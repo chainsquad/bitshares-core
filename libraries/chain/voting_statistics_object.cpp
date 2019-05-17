@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Cryptonomex, Inc., and contributors.
+ * Copyright (c) 2019 Blockchain Projects B.V.
  *
  * The MIT License
  *
@@ -21,14 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-#include <graphene/chain/genesis_state.hpp>
+#include <graphene/chain/voting_statistics_object.hpp>
 
 namespace graphene { namespace chain {
 
-chain_id_type genesis_state_type::compute_chain_id() const
-{
-   return initial_chain_id;
-}
+    block_id_type voting_statistics_object::block_id; 
 
-} } // graphene::chain
+}} // graphene::chain

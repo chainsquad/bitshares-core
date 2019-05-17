@@ -43,6 +43,7 @@ add_library( graphene_chain
              protocol/assert.cpp
              protocol/account.cpp
              protocol/transfer.cpp
+             protocol/chain_parameters.cpp
              protocol/committee_member.cpp
              protocol/witness.cpp
              protocol/market.cpp
@@ -87,6 +88,7 @@ add_library( graphene_chain
              market_object.cpp
              proposal_object.cpp
              vesting_balance_object.cpp
+             voting_statistics_object.cpp
 
              block_database.cpp
 
