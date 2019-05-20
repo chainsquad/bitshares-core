@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Blockchain Projects BV.
+ * Copyright (c) 2019 Blockchain Projects B.V.
  *
  * The MIT License
  *

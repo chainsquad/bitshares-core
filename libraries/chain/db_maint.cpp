@@ -1082,7 +1082,8 @@ void database::perform_chain_maintenance(const signed_block& next_block, const g
    distribute_fba_balances(*this);
    create_buyback_orders(*this);
 
-   begin_maintenance_interval( next_block.id() );
+   on_maintenance_begin( next_block.id() );
+
    struct vote_tally_helper {
       database& d;
       const global_property_object& props;
@@ -1112,7 +1113,7 @@ void database::perform_chain_maintenance(const signed_block& next_block, const g
                   + (stake_account.cashback_vb.valid() ? (*stake_account.cashback_vb)(d).balance.amount.value: 0)
                   + stats.core_in_balance.value;
 
-            d.voting_stake_calculated( stake_account, opinion_account, voting_stake );
+            d.on_voting_stake_calculated( stake_account, opinion_account, voting_stake );
 
             for( vote_id_type id : opinion_account.options.votes )
             {
