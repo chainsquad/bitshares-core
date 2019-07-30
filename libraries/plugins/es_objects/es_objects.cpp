@@ -144,69 +144,107 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
          limit_documents = _es_objects_bulk_replay;
 
 
-      for (auto const &value: ids) {
-         if (value.is<proposal_object>() && _es_objects_proposals) {
-            auto obj = db.find_object(value);
-            auto p = static_cast<const proposal_object *>(obj);
-            if (p != nullptr) {
-               if (action == "delete")
-                  remove_from_database(p->id, "proposal");
-               else
-                  prepareTemplate<proposal_object>(*p, "proposal");
+      for (auto const &value: ids) 
+      {
+         switch( value.type() )
+         {
+            case proposal_object::type:
+            {
+               if( _es_objects_proposals ) {
+                  auto obj = db.find_object(value);
+                  auto p = static_cast<const proposal_object *>(obj);
+                  if (p != nullptr) {
+                     if (action == "delete")
+                        remove_from_database(p->id, "proposal");
+                     else
+                        prepareTemplate<proposal_object>(*p, "proposal");
+                  }
+               }
+               break;
             }
-         } else if (value.is<account_object>() && _es_objects_accounts) {
-            auto obj = db.find_object(value);
-            auto a = static_cast<const account_object *>(obj);
-            if (a != nullptr) {
-               if (action == "delete")
-                  remove_from_database(a->id, "account");
-               else
-                  prepareTemplate<account_object>(*a, "account");
+            case account_object::type:
+            {
+               if( _es_objects_accounts ) {
+                  auto obj = db.find_object(value);
+                  auto a = static_cast<const account_object *>(obj);
+                  if (a != nullptr) {
+                     if (action == "delete")
+                        remove_from_database(a->id, "account");
+                     else
+                        prepareTemplate<account_object>(*a, "account");
+                  }
+               }
+               break;
             }
-         } else if (value.is<asset_object>() && _es_objects_assets) {
-            auto obj = db.find_object(value);
-            auto a = static_cast<const asset_object *>(obj);
-            if (a != nullptr) {
-               if (action == "delete")
-                  remove_from_database(a->id, "asset");
-               else
-                  prepareTemplate<asset_object>(*a, "asset");
+            case asset_object::type:
+            {   
+               if( _es_objects_assets ) {
+                  auto obj = db.find_object(value);
+                  auto a = static_cast<const asset_object *>(obj);
+                  if (a != nullptr) {
+                     if (action == "delete")
+                        remove_from_database(a->id, "asset");
+                     else
+                        prepareTemplate<asset_object>(*a, "asset");
+                  }
+               }
+               break;             
             }
-         } else if (value.is<account_balance_object>() && _es_objects_balances) {
-            auto obj = db.find_object(value);
-            auto b = static_cast<const account_balance_object *>(obj);
-            if (b != nullptr) {
-               if (action == "delete")
-                  remove_from_database(b->id, "balance");
-               else
-                  prepareTemplate<account_balance_object>(*b, "balance");
+            case account_balance_object::type:
+            {   
+               if( _es_objects_balances ) {
+                  auto obj = db.find_object(value);
+                  auto b = static_cast<const account_balance_object *>(obj);
+                  if (b != nullptr) {
+                     if (action == "delete")
+                        remove_from_database(b->id, "balance");
+                     else
+                        prepareTemplate<account_balance_object>(*b, "balance");
+                  }             
+               }
+               break;             
             }
-         } else if (value.is<limit_order_object>() && _es_objects_limit_orders) {
-            auto obj = db.find_object(value);
-            auto l = static_cast<const limit_order_object *>(obj);
-            if (l != nullptr) {
-               if (action == "delete")
-                  remove_from_database(l->id, "limitorder");
-               else
-                  prepareTemplate<limit_order_object>(*l, "limitorder");
+            case limit_order_object::type:
+            {
+               if( _es_objects_limit_orders ) {
+                  auto obj = db.find_object(value);
+                  auto l = static_cast<const limit_order_object *>(obj);
+                  if (l != nullptr) {
+                     if (action == "delete")
+                        remove_from_database(l->id, "limitorder");
+                     else
+                        prepareTemplate<limit_order_object>(*l, "limitorder");
+                  }
+               }
+               break;             
             }
-         } else if (value.is<asset_bitasset_data_object>() && _es_objects_asset_bitasset) {
-            auto obj = db.find_object(value);
-            auto ba = static_cast<const asset_bitasset_data_object *>(obj);
-            if (ba != nullptr) {
-               if (action == "delete")
-                  remove_from_database(ba->id, "bitasset");
-               else
-                  prepareTemplate<asset_bitasset_data_object>(*ba, "bitasset");
+            case asset_bitasset_data_object::type:
+            {           
+               if( _es_objects_asset_bitasset ) {
+                  auto obj = db.find_object(value);
+                  auto ba = static_cast<const asset_bitasset_data_object *>(obj);
+                  if (ba != nullptr) {
+                     if (action == "delete")
+                        remove_from_database(ba->id, "bitasset");
+                     else
+                        prepareTemplate<asset_bitasset_data_object>(*ba, "bitasset");
+                  }
+               }     
+               break;             
             }
-         } else if(value.is<voting_statistics_object>() && _es_objects_voting_statistics) {
-            auto obj = db.find_object(value);
-            auto vs = static_cast<const voting_statistics_object *>(obj);
-            if (vs != nullptr) {
-               if (action == "delete")
-                  remove_from_database(vs->id, "voting_statistics");
-               else
-                  prepareTemplate<voting_statistics_object>(*vs, "voting-statistics");
+            case voting_statistics_object::type:
+            {   
+               if( _es_objects_voting_statistics ) { 
+                  auto obj = db.find_object(value);
+                  auto vs = static_cast<const voting_statistics_object *>(obj);
+                  if (vs != nullptr) {
+                     if (action == "delete")
+                        remove_from_database(vs->id, "voting_statistics");
+                     else
+                        prepareTemplate<voting_statistics_object>(*vs, "voting-statistics");
+                  }
+               }
+               break;             
             }
          }
       }
