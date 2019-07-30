@@ -213,8 +213,13 @@ namespace graphene { namespace chain {
          /**
           * Emitted after the beginning of the maintenance interval
           */
-         fc::signal<void(const block_id_type)> on_maintenance_begin;
+         fc::signal<void(uint32_t)> on_maintenance_begin;
 
+         /**
+          * Emitted after the end of the maintenance interval
+          */
+         fc::signal<void()> on_maintenance_end;
+         
          //////////////////// db_witness_schedule.cpp ////////////////////
 
          /**
