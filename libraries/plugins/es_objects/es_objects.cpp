@@ -63,6 +63,8 @@ class es_objects_plugin_impl
       bool _es_objects_limit_orders = true;
       bool _es_objects_asset_bitasset = true;
       bool _es_objects_voting_statistics = true;
+      bool _es_objects_voting_statistics_delete_forbidden = true;
+
       std::string _es_objects_index_prefix = "objects-";
       uint32_t _es_objects_start_es_after_block = 0;
       CURL *curl; // curl handler
@@ -237,8 +239,9 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
                if( _es_objects_voting_statistics ) { 
                   auto obj = db.find_object(value);
                   auto vs = static_cast<const voting_statistics_object *>(obj);
+
                   if (vs != nullptr) {
-                     if (action == "delete")
+                     if (action == "delete" && !_es_objects_voting_statistics_delete_forbidden )
                         remove_from_database(vs->id, "voting_statistics");
                      else
                         prepareTemplate<voting_statistics_object>(*vs, "voting-statistics");
