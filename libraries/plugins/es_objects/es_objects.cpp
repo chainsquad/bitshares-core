@@ -150,7 +150,7 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
       {
          switch( value.type() )
          {
-            case proposal_object::type:
+            case proposal_object::type_id:
             {
                if( _es_objects_proposals ) {
                   auto obj = db.find_object(value);
@@ -164,7 +164,7 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
                }
                break;
             }
-            case account_object::type:
+            case account_object::type_id:
             {
                if( _es_objects_accounts ) {
                   auto obj = db.find_object(value);
@@ -178,7 +178,7 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
                }
                break;
             }
-            case asset_object::type:
+            case asset_object::type_id:
             {   
                if( _es_objects_assets ) {
                   auto obj = db.find_object(value);
@@ -192,7 +192,7 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
                }
                break;             
             }
-            case account_balance_object::type:
+            case account_balance_object::type_id:
             {   
                if( _es_objects_balances ) {
                   auto obj = db.find_object(value);
@@ -206,7 +206,7 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
                }
                break;             
             }
-            case limit_order_object::type:
+            case limit_order_object::type_id:
             {
                if( _es_objects_limit_orders ) {
                   auto obj = db.find_object(value);
@@ -220,7 +220,7 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
                }
                break;             
             }
-            case asset_bitasset_data_object::type:
+            case asset_bitasset_data_object::type_id:
             {           
                if( _es_objects_asset_bitasset ) {
                   auto obj = db.find_object(value);
@@ -234,7 +234,7 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
                }     
                break;             
             }
-            case voting_statistics_object::type:
+            case voting_statistics_object::type_id:
             {   
                if( _es_objects_voting_statistics ) { 
                   auto obj = db.find_object(value);
