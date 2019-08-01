@@ -66,28 +66,6 @@ struct voting_stat_fixture : public database_fixture
             
             app.register_plugin<voting_stat_plugin>( true );
             app.register_plugin<es_objects_plugin>( true );
-
-            auto es_object = app.get_plugin<es_objects_plugin>("es_objects");
-            bpo::options_description cli;
-            bpo::options_description cfi;
-            es_object->plugin_set_program_options( cli, cfi );
-
-            bpo::variables_map var_map;
-
-            int plugin_argc = 17;
-            const char* const plugin_argv[]{ "voting_stat",
-                "--es-objects-bulk-replay", "1",
-                "--es-objects-proposals", "false",
-                "--es-objects-accounts", "false",
-                "--es-objects-assets", "false",
-                "--es-objects-balances", "false",
-                "--es-objects-limit-orders", "false",
-                "--es-objects-asset-bitasset", "false",
-                "--es-objects-keep-only-current", "false"
-            };
-
-            bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfi ), var_map );
-            app.initialize_plugins( var_map ); 
         } 
         catch(fc::exception &e)
         {
@@ -132,24 +110,27 @@ struct voting_stat_fixture : public database_fixture
 
 BOOST_FIXTURE_TEST_SUITE( voting_stat_tests, voting_stat_fixture )
 
-BOOST_AUTO_TEST_CASE( block_id_changes_with_each_interval )
-{ try {
-
-    make_next_maintenance_interval();
-    auto first_block_id = voting_statistics_object::block_id;
-
-    make_next_maintenance_interval();
-    auto second_block_id = voting_statistics_object::block_id;
-    BOOST_CHECK( first_block_id != second_block_id );
-
-    make_next_maintenance_interval();
-    auto third_block_id = voting_statistics_object::block_id;
-    BOOST_CHECK( second_block_id != third_block_id );
-
-} FC_LOG_AND_RETHROW() }
-
 BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy ) 
 { try {
+
+    bpo::options_description cli;
+    bpo::options_description cfi;
+
+    auto voting_stat = app.get_plugin<voting_stat_plugin>("voting_stat");
+    voting_stat->plugin_set_program_options( cli, cfi );
+    
+    bpo::variables_map var_map;
+
+    const char* const plugin_argv[]{ "voting_stat",
+        "--voting-stat-track-every-x-maint", "1",
+        "--voting-stat-del-objs-after-maint", "false"
+    };
+    int plugin_argc = sizeof(plugin_argv)/sizeof(char*);
+
+    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfi ), var_map );
+    app.initialize_plugins( var_map ); 
+
+
 
     ACTOR( alice );
     transfer( committee_account, alice_id, asset(1) );
@@ -160,7 +141,12 @@ BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy )
     BOOST_CHECK( alice_acc.options.voting_account == GRAPHENE_PROXY_TO_SELF_ACCOUNT );
 
 
+    try {
     make_next_maintenance_interval();
+    } catch( fc::exception &e ) {
+        std::cout << e.to_detail_string() << std::endl;
+    }
+
     const auto& alice_stat1 = get_voting_statistics_object( alice_id );
 
     BOOST_CHECK( alice_stat1.proxy == GRAPHENE_PROXY_TO_SELF_ACCOUNT );
@@ -172,7 +158,7 @@ BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy )
 
 
     /* increase stake */
-    transfer( committee_account, alice_id, asset(10) );
+    transfer( committee_account, alice_id, asset(1) );
 
     make_next_maintenance_interval();
     const auto& alice_stat2 = get_voting_statistics_object( alice_id );
@@ -180,14 +166,36 @@ BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy )
     BOOST_CHECK( alice_stat2.proxy == GRAPHENE_PROXY_TO_SELF_ACCOUNT );
     BOOST_CHECK( !alice_stat2.has_proxy() );
     BOOST_CHECK( alice_stat2.proxy_for.empty() );
-    BOOST_CHECK( alice_stat2.stake == 11 );
+    BOOST_CHECK( alice_stat2.stake == 2 );
     BOOST_CHECK( *alice_stat1.votes.begin() == default_vote_id );
-    BOOST_CHECK( alice_stat1.get_total_voting_stake() == 11 );
+    BOOST_CHECK( alice_stat1.get_total_voting_stake() == 2 );
 
 } FC_LOG_AND_RETHROW() }
 
 BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy ) 
 { try {
+
+    auto es_object = app.get_plugin<es_objects_plugin>("es_objects");
+    bpo::options_description cli;
+    bpo::options_description cfi;
+    es_object->plugin_set_program_options( cli, cfi );
+
+    bpo::variables_map var_map;
+
+    const char* const plugin_argv[]{ "voting_stat",
+        "--es-objects-bulk-replay", "1",
+        "--es-objects-proposals", "false",
+        "--es-objects-accounts", "false",
+        "--es-objects-assets", "false",
+        "--es-objects-balances", "false",
+        "--es-objects-limit-orders", "false",
+        "--es-objects-asset-bitasset", "false",
+        "--es-objects-keep-only-current", "true",
+    };
+    int plugin_argc = sizeof(plugin_argv)/sizeof(char*);
+    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfi ), var_map );
+    app.initialize_plugins( var_map ); 
+
     /* clear es-db */
     auto objects_deleted = graphene::utilities::deleteAll(_es);
     if( !objects_deleted )
