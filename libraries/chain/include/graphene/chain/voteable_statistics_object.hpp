@@ -65,8 +65,7 @@ namespace graphene { namespace chain {
       /* returns the total votes of this object */
       uint64_t get_votes() const
       {
-         uint64_t init = 0;
-         return boost::accumulate( voted_by | boost::adaptors::map_values, init );
+         return boost::accumulate( voted_by | boost::adaptors::map_values, 0 );
       }
    };
 
@@ -102,5 +101,5 @@ namespace graphene { namespace chain {
 
 }} // graphene::chain
 
-FC_REFLECT_DERIVED( graphene::chain::voting_statistics_object, (graphene::chain::object),
-                    (account)(stake)(proxy)(proxy_for)(votes) )
+FC_REFLECT_DERIVED( graphene::chain::voteable_statistics_object, (graphene::chain::object),
+                    (block_number)(vote_id)(voted_by) )
