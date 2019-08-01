@@ -99,4 +99,4 @@ namespace graphene { namespace chain {
 }} // graphene::chain
 
 FC_REFLECT_DERIVED( graphene::chain::voting_statistics_object, (graphene::chain::object),
-                    (account)(stake)(proxy)(proxy_for)(votes) )
+                    (block_number)(account)(stake)(proxy)(proxy_for)(votes) )
