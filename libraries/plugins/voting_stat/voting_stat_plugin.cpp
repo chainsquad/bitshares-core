@@ -140,8 +140,7 @@ void voting_stat_plugin_impl::create_voteable_statistic_objects()
    // TODO secondary index for workers where current_time < worker_end_time
 
    // TODO IF TRACK_WORKER
-   const auto& worker_idx = db.get_index_type<worker_index>().indices()
-      .get<by_id>();
+   const auto& worker_idx = db.get_index_type<worker_index>().indices().get<by_id>();
    
    auto now = db.head_block_time();
    for( const auto& worker : worker_idx )
@@ -308,7 +307,8 @@ void voting_stat_plugin::plugin_initialize(const boost::program_options::variabl
 {
    auto& db = database();
    db.add_index< primary_index< voting_statistics_index > >();
-   
+   db.add_index< primary_index< voteable_statistics_index > >();
+
    if( options.count("voting-stat-track-every-x-maint") ){
       my->_track_every_x_maint = options["voting-stat-track-every-x-maint"].as<uint8_t>();
       my->_maint_counter = my->_track_every_x_maint;
