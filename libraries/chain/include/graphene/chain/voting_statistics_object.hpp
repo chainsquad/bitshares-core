@@ -32,7 +32,7 @@
 #include <graphene/chain/protocol/vote.hpp>
 
 #include <graphene/db/generic_index.hpp>
-
+#include <boost/multi_index/composite_key.hpp>
 
 namespace graphene { namespace chain {
 
@@ -87,9 +87,29 @@ namespace graphene { namespace chain {
    typedef multi_index_container<
       voting_statistics_object,
       indexed_by<
-         ordered_unique< tag<by_id>, member< object, object_id_type, &object::id > >,
-         ordered_unique< tag<by_owner>,
-            member< voting_statistics_object, account_id_type, &voting_statistics_object::account >
+         ordered_unique< 
+            tag<by_id>, 
+            member< 
+               object, 
+               object_id_type, 
+               &object::id 
+            > 
+         >,
+         ordered_unique< 
+            tag<by_owner>,
+            composite_key< 
+               voting_statistics_object,
+               member<
+                  object,
+                  object_id_type,
+                  &object::id
+               >,
+               member< 
+                  voting_statistics_object, 
+                  account_id_type, 
+                  &voting_statistics_object::account 
+               >
+            >
          >
       >
    > voting_statistics_multi_index_type;
