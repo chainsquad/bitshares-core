@@ -134,19 +134,18 @@ BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy )
 
     ACTOR( alice );
     transfer( committee_account, alice_id, asset(1) );
+    upgrade_to_lifetime_member( alice_id );
     set_account_options( alice_id );
+    
+
+    // TODO: is this intended? iterating over no workers throws error (using range loop normally shouldn't throw)
+    create_worker( alice_id, 100, fc::microseconds(100000000000) );
     
     const auto& alice_acc = alice_id(db);
     BOOST_CHECK( *alice_acc.options.votes.begin() == default_vote_id );
     BOOST_CHECK( alice_acc.options.voting_account == GRAPHENE_PROXY_TO_SELF_ACCOUNT );
 
-
-    try {
     make_next_maintenance_interval();
-    } catch( fc::exception &e ) {
-        std::cout << e.to_detail_string() << std::endl;
-    }
-
     const auto& alice_stat1 = get_voting_statistics_object( alice_id );
 
     BOOST_CHECK( alice_stat1.proxy == GRAPHENE_PROXY_TO_SELF_ACCOUNT );
