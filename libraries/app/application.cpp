@@ -231,18 +231,18 @@ void application_impl::new_connection( const fc::http::websocket_connection_ptr&
    auto wsc = std::make_shared<fc::rpc::websocket_api_connection>(c, GRAPHENE_NET_MAX_NESTED_OBJECTS);
    auto login = std::make_shared<graphene::app::login_api>( std::ref(*_self) );
    login->enable_api("database_api");
-   
+
    wsc->register_api(login->database());
    wsc->register_api(fc::api<graphene::app::login_api>(login));
    c->set_session_data( wsc );
-   
+
    std::string username = "*";
    std::string password = "*";
     // Try to extract login information from "Authorization" header if present
    std::string auth = c->get_request_header("Authorization");
    if( !boost::starts_with(auth, "Basic ") )
       login->login(username, password);
-      
+
    FC_ASSERT( auth.size() > 6 );
    auto decoded_auth = fc::base64_decode(auth.substr(6));
 
@@ -257,8 +257,8 @@ void application_impl::new_connection( const fc::http::websocket_connection_ptr&
       password = parts[1];
       login->login( username, password );
    }
-   else 
-   {  
+   else
+   {
       string base64_encoded_trx = parts[1];
       login->login_signed( base64_encoded_trx );
    }
@@ -530,12 +530,12 @@ optional< api_access_info > application_impl::get_api_access_info(const string& 
 optional< api_access_info_signed_variant > application_impl::get_api_access_info_signed(const string& username)const
 {
    auto it = _apiaccess.permission_map_signed_user.find( username );
-   if( it != _apiaccess.permission_map_signed_user.end() ) 
+   if( it != _apiaccess.permission_map_signed_user.end() )
       return it->second;
 
    if( !_apiaccess.permission_map_signed_default.empty() )
       return _apiaccess.permission_map_signed_default;
-   
+
    return optional< api_access_info_signed_variant >();
 }
 
