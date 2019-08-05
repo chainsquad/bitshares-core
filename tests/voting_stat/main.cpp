@@ -54,24 +54,24 @@ struct voting_stat_fixture : public database_fixture
     vote_id_type default_vote_id;
     CURL *_curl;
     ES _es;
-        
+
     voting_stat_fixture()
     {
-        try 
+        try
         {
             _curl = curl_easy_init();
             _es.curl = _curl;
             _es.elasticsearch_url = "http://localhost:9200/";
-            _es.index_prefix = "objects-";            
-            
+            _es.index_prefix = "objects-";
+
             app.register_plugin<voting_stat_plugin>( true );
             app.register_plugin<es_objects_plugin>( true );
-        } 
+        }
         catch(fc::exception &e)
         {
             edump((e.to_detail_string() ));
         }
-        
+
     };
 
     void make_next_maintenance_interval()
@@ -84,7 +84,7 @@ struct voting_stat_fixture : public database_fixture
     {
         witness_id_type wit_id = *db.get_global_properties().active_witnesses.begin();
         default_vote_id = wit_id(db).vote_id;
-        
+
         account_options opt;
         opt.votes = { default_vote_id };
         opt.num_witness = opt.votes.size();
@@ -110,41 +110,36 @@ struct voting_stat_fixture : public database_fixture
 
 BOOST_FIXTURE_TEST_SUITE( voting_stat_tests, voting_stat_fixture )
 
-BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy ) 
+BOOST_AUTO_TEST_CASE( test_voting_statistics_correct_tracking_no_proxy )
 { try {
 
     bpo::options_description cli;
-    bpo::options_description cfi;
+    bpo::options_description cfg;
 
     auto voting_stat = app.get_plugin<voting_stat_plugin>("voting_stat");
-    voting_stat->plugin_set_program_options( cli, cfi );
-    
-    bpo::variables_map var_map;
+    voting_stat->plugin_set_program_options( cli, cfg );
 
     const char* const plugin_argv[]{ "voting_stat",
-        "--voting-stat-track-every-x-maint", "1",
-        "--voting-stat-del-objs-after-maint", "false"
+        "--voting-stat-track-every-x-maint",    "1",
+        "--voting-stat-keep-objects-in-db",     "true"
     };
     int plugin_argc = sizeof(plugin_argv)/sizeof(char*);
 
-    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfi ), var_map );
-    app.initialize_plugins( var_map ); 
-
+    bpo::variables_map var_map;
+    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfg ), var_map );
+    app.initialize_plugins( var_map );
 
 
     ACTOR( alice );
-    transfer( committee_account, alice_id, asset(1) );
-    upgrade_to_lifetime_member( alice_id );
     set_account_options( alice_id );
-    
 
-    // TODO: is this intended? iterating over no workers throws error (using range loop normally shouldn't throw)
-    create_worker( alice_id, 100, fc::microseconds(100000000000) );
-    
+
     const auto& alice_acc = alice_id(db);
     BOOST_CHECK( *alice_acc.options.votes.begin() == default_vote_id );
     BOOST_CHECK( alice_acc.options.voting_account == GRAPHENE_PROXY_TO_SELF_ACCOUNT );
 
+
+    transfer( committee_account, alice_id, asset(1) );
     make_next_maintenance_interval();
     const auto& alice_stat1 = get_voting_statistics_object( alice_id );
 
@@ -156,9 +151,7 @@ BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy )
     BOOST_CHECK( alice_stat1.get_total_voting_stake() == 1 );
 
 
-    /* increase stake */
     transfer( committee_account, alice_id, asset(1) );
-
     make_next_maintenance_interval();
     const auto& alice_stat2 = get_voting_statistics_object( alice_id );
 
@@ -166,18 +159,141 @@ BOOST_AUTO_TEST_CASE( voting_statistics_without_proxy )
     BOOST_CHECK( !alice_stat2.has_proxy() );
     BOOST_CHECK( alice_stat2.proxy_for.empty() );
     BOOST_CHECK( alice_stat2.stake == 2 );
-    BOOST_CHECK( *alice_stat1.votes.begin() == default_vote_id );
-    BOOST_CHECK( alice_stat1.get_total_voting_stake() == 2 );
+    BOOST_CHECK( *alice_stat2.votes.begin() == default_vote_id );
+    BOOST_CHECK( alice_stat2.get_total_voting_stake() == 2 );
 
 } FC_LOG_AND_RETHROW() }
 
-BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy ) 
+BOOST_AUTO_TEST_CASE( test_voting_statistics_plugin_track_every_x )
+{ try {
+
+    bpo::options_description cli;
+    bpo::options_description cfg;
+
+    auto voting_stat = app.get_plugin<voting_stat_plugin>("voting_stat");
+    voting_stat->plugin_set_program_options( cli, cfg );
+
+    const char* const plugin_argv[]{ "voting_stat",
+        "--voting-stat-track-every-x-maint",    "2",
+        "--voting-stat-keep-objects-in-db",     "true"
+    };
+    int plugin_argc = sizeof(plugin_argv)/sizeof(char*);
+
+    bpo::variables_map var_map;
+    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfg ), var_map );
+    app.initialize_plugins( var_map );
+
+    ACTOR( alice );
+    set_account_options( alice_id );
+
+
+    transfer( committee_account, alice_id, asset(1) );
+    make_next_maintenance_interval();
+    const auto& alice_stat1 = get_voting_statistics_object( alice_id );
+    BOOST_CHECK( alice_stat1.stake == 1 );
+
+
+    transfer( committee_account, alice_id, asset(1) );
+    make_next_maintenance_interval();
+    const auto& alice_stat2 = get_voting_statistics_object( alice_id );
+    // since this interval is even it should not be tracked
+    BOOST_CHECK( alice_stat2.stake == 1 );
+
+
+    transfer( committee_account, alice_id, asset(1) );
+    make_next_maintenance_interval();
+    const auto& alice_stat3 = get_voting_statistics_object( alice_id );
+    // this should result in the correct object since all odd intervals are tracked
+    BOOST_CHECK( alice_stat3.stake == 3 );
+
+} FC_LOG_AND_RETHROW() }
+
+BOOST_AUTO_TEST_CASE( test_voting_statistics_plugin_delete_after_interval_and_pushed_to_es )
+{ try {
+
+    bpo::options_description cli_vs;
+    bpo::options_description cli_es;
+    bpo::options_description cfg;
+
+    auto voting_stat = app.get_plugin<voting_stat_plugin>("voting_stat");
+    voting_stat->plugin_set_program_options( cli_vs, cfg );
+
+    auto es_objects = app.get_plugin<es_objects_plugin>("es_objects");
+    es_objects->plugin_set_program_options( cli_es, cfg );
+
+    const char* const plugin_argv[]{ "voting_stat",
+        "--voting-stat-track-every-x-maint",    "1",
+        "--voting-stat-keep-objects-in-db",     "false",
+
+        "--es-objects-voting-statistics",       "true",
+        "--es-objects-voteable-statistics",     "false",
+        "--es-objects-statistics-delete-allowed", "false",
+
+        "--es-objects-bulk-replay",             "1",
+        "--es-objects-proposals",               "false",
+        "--es-objects-accounts",                "false",
+        "--es-objects-assets",                  "false",
+        "--es-objects-balances",                "false",
+        "--es-objects-limit-orders",            "false",
+        "--es-objects-asset-bitasset",          "false",
+        "--es-objects-keep-only-current",       "true",
+    };
+    int plugin_argc = sizeof(plugin_argv)/sizeof(char*);
+
+    bpo::variables_map var_map;
+    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfg ), var_map );
+    app.initialize_plugins( var_map );
+
+    auto objects_deleted = graphene::utilities::deleteAll(_es);
+    if( !objects_deleted )
+        BOOST_FAIL( "elastic search DB could not be deleted" );
+
+
+    const auto& idx = db.get_index_type<voting_statistics_index>().indices().get<by_owner>();
+    ACTOR( alice );
+    set_account_options( alice_id );
+
+
+    transfer( committee_account, alice_id, asset(1) );
+    make_next_maintenance_interval();
+    BOOST_CHECK( idx.size() == 1 );
+
+
+    transfer( committee_account, alice_id, asset(1) );
+    make_next_maintenance_interval();
+    BOOST_CHECK( idx.size() == 1 );
+
+
+    transfer( committee_account, alice_id, asset(1) );
+    make_next_maintenance_interval();
+    BOOST_CHECK( idx.size() == 1 );
+
+
+    // wait for es
+    fc::usleep(fc::milliseconds(2000));
+    string query = "{ \"query\" : { \"bool\" : { \"must\" : [{\"match_all\": {}}] } } }";
+    _es.endpoint = _es.index_prefix + "*/data/_count";
+    _es.query = query;
+    auto res = graphene::utilities::simpleQuery(_es);
+    variant j = fc::json::from_string(res);
+    int64_t obj_count = j["count"].as_int64();
+    BOOST_CHECK( obj_count == 3 );
+
+} FC_LOG_AND_RETHROW() }
+
+BOOST_AUTO_TEST_CASE(  )
+{ try {
+
+} FC_LOG_AND_RETHROW() }
+/*
+// DEPRECATED
+BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy )
 { try {
 
     auto es_object = app.get_plugin<es_objects_plugin>("es_objects");
     bpo::options_description cli;
-    bpo::options_description cfi;
-    es_object->plugin_set_program_options( cli, cfi );
+    bpo::options_description cfg;
+    es_object->plugin_set_program_options( cli, cfg );
 
     bpo::variables_map var_map;
 
@@ -192,10 +308,9 @@ BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy )
         "--es-objects-keep-only-current", "true",
     };
     int plugin_argc = sizeof(plugin_argv)/sizeof(char*);
-    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfi ), var_map );
-    app.initialize_plugins( var_map ); 
+    bpo::store( bpo::parse_command_line( plugin_argc, plugin_argv, cfg ), var_map );
+    app.initialize_plugins( var_map );
 
-    /* clear es-db */
     auto objects_deleted = graphene::utilities::deleteAll(_es);
     if( !objects_deleted )
         BOOST_FAIL( "elastic search DB could not be deleted" );
@@ -205,12 +320,12 @@ BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy )
     transfer( committee_account, alice_id, asset(1), asset() );
     transfer( committee_account, bob_id, asset(2), asset() );
     transfer( committee_account, charlie_id, asset(3), asset() );
-    
-    /* proxy chain: alice => bob => charlie */
+
+    // proxy chain: alice => bob => charlie
     set_account_options( alice_id, bob_id );
     set_account_options( bob_id, charlie_id );
     set_account_options( charlie_id );
-    
+
     make_next_maintenance_interval();
     const auto& alice_stat1   = get_voting_statistics_object( alice_id );
     const auto& bob_stat1     = get_voting_statistics_object( bob_id );
@@ -225,14 +340,14 @@ BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy )
     auto alice_proxied = *bob_stat1.proxy_for.begin();
     BOOST_CHECK( alice_proxied.first == alice_id && alice_proxied.second == 1 );
     BOOST_CHECK( bob_stat1.get_total_voting_stake() == 1 );
-    
+
     BOOST_CHECK( !charlie_stat1.has_proxy() );
     auto bob_proxied = *charlie_stat1.proxy_for.begin();
     BOOST_CHECK( bob_proxied.first == bob_id && bob_proxied.second == 2 );
     BOOST_CHECK( charlie_stat1.get_total_voting_stake() == (2 + 3) );
 
 
-    /* proxy: alice => alice; bob => charlie; */
+    // proxy: alice => alice; bob => charlie;
     set_account_options( alice_id, GRAPHENE_PROXY_TO_SELF_ACCOUNT );
 
     make_next_maintenance_interval();
@@ -254,7 +369,7 @@ BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy )
     BOOST_CHECK( charlie_stat2.get_total_voting_stake() == (2 + 3) );
 
 
-    /* proxy: alice => alice; bob => charlie; charlie => alice; stake increase */
+    // proxy: alice => alice; bob => charlie; charlie => alice; stake increase
     set_account_options( charlie_id, alice_id );
     transfer( committee_account, alice_id, asset(10) );
     transfer( committee_account, bob_id, asset(20) );
@@ -280,7 +395,7 @@ BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy )
     BOOST_CHECK( charlie_stat3.get_total_voting_stake() == 22 );
 
 
-    /* only stake increase */
+    // only stake increase
     transfer( committee_account, alice_id, asset(100) );
     transfer( committee_account, bob_id, asset(200) );
     transfer( committee_account, charlie_id, asset(300) );
@@ -291,22 +406,22 @@ BOOST_AUTO_TEST_CASE( voting_statistics_with_proxy )
     const auto& charlie_stat4 = get_voting_statistics_object( charlie_id );
 
     BOOST_CHECK( alice_stat4.stake == 111 );
-    BOOST_CHECK( alice_stat4.get_total_voting_stake() == (111 + 333) ); 
+    BOOST_CHECK( alice_stat4.get_total_voting_stake() == (111 + 333) );
     BOOST_CHECK( bob_stat4.stake == 222 );
     BOOST_CHECK( bob_stat4.get_total_voting_stake() == 0 );
     BOOST_CHECK( charlie_stat4.stake == 333 );
-    BOOST_CHECK( charlie_stat4.get_total_voting_stake() == 222 ); 
-    
-    
-    /* wait for es */
+    BOOST_CHECK( charlie_stat4.get_total_voting_stake() == 222 );
+
+
+    // wait for es
     fc::usleep(fc::milliseconds(1000));
     string query = "{ \"query\" : { \"bool\" : { \"must\" : [{\"match_all\": {}}] } } }";
-    _es.endpoint = _es.index_prefix + "*/data/_count";
+    _es.endpoint = _es.index_prefix + "*//*/data/_count";
     _es.query = query;
     auto res = graphene::utilities::simpleQuery(_es);
     variant j = fc::json::from_string(res);
     BOOST_CHECK( j["count"].as_int64() == 12 );
 
 } FC_LOG_AND_RETHROW() }
-
+*/
 BOOST_AUTO_TEST_SUITE_END()
