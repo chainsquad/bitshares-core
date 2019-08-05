@@ -42,7 +42,7 @@ namespace graphene { namespace chain {
     * @ingroup implementation
     *
     * The calculation of the voting stake, performed in the maintenance interval, results
-    * in the creation or, if present, in the update of a voting_statistics_object. 
+    * in the creation or, if present, in the update of a voting_statistics_object.
     *
     * @note By default these objects are not tracked, the voting_stat_plugin must
     * be loaded for these objects to be maintained.
@@ -52,7 +52,7 @@ namespace graphene { namespace chain {
    public:
       static const uint8_t space_id = protocol_ids;
       static const uint8_t type_id  = voting_statistics_object_type;
-      
+
       voting_statistics_object(){}
 
       /* the block_num where the maintenance interval was performed */
@@ -75,7 +75,7 @@ namespace graphene { namespace chain {
          return boost::accumulate( proxy_for | boost::adaptors::map_values, init );
       }
 
-      inline bool has_proxy() const 
+      inline bool has_proxy() const
       {
          return GRAPHENE_PROXY_TO_SELF_ACCOUNT != proxy;
       }
@@ -83,32 +83,36 @@ namespace graphene { namespace chain {
 
 
    struct by_owner{};
-
+   // TODO maybe add by block_number index (same for voteable)
    typedef multi_index_container<
       voting_statistics_object,
       indexed_by<
-         ordered_unique< 
-            tag<by_id>, 
-            member< 
-               object, 
-               object_id_type, 
-               &object::id 
-            > 
+         ordered_unique<
+            tag<by_id>,
+            member<
+               object,
+               object_id_type,
+               &object::id
+            >
          >,
-         ordered_unique< 
+         ordered_unique<
             tag<by_owner>,
-            composite_key< 
+            composite_key<
                voting_statistics_object,
                member<
-                  object,
-                  object_id_type,
-                  &object::id
+                  voting_statistics_object,
+                  account_id_type,
+                  &voting_statistics_object::account
                >,
-               member< 
-                  voting_statistics_object, 
-                  account_id_type, 
-                  &voting_statistics_object::account 
+               member<
+                  voting_statistics_object,
+                  uint32_t,
+                  &voting_statistics_object::block_number
                >
+            >,
+            composite_key_compare<
+               std::less<account_id_type>,
+               std::greater<uint32_t>
             >
          >
       >
