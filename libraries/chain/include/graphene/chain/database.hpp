@@ -219,7 +219,7 @@ namespace graphene { namespace chain {
           * Emitted after the end of the maintenance interval
           */
          fc::signal<void()> on_maintenance_end;
-         
+
          //////////////////// db_witness_schedule.cpp ////////////////////
 
          /**
@@ -336,7 +336,7 @@ namespace graphene { namespace chain {
           * to newly created VBID and return it.
           *
           * Otherwise, credit amount to ovbid.
-          * 
+          *
           * @return ID of newly created VBO, but only if VBO was created.
           */
          optional< vesting_balance_id_type > deposit_lazy_vesting(
