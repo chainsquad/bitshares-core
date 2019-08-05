@@ -42,17 +42,17 @@ namespace graphene { namespace chain {
     * @ingroup implementation
     *
     * The calculation of the voting stake, performed in the maintenance interval, results
-    * in the creation or, if present, in the update of a voting_statistics_object. 
+    * in the creation or, if present, in the update of a voting_statistics_object.
     *
     * @note By default these objects are not tracked, the voting_stat_plugin must
     * be loaded for these objects to be maintained.
     */
-   class voteable_statistics_object : public abstract_object<voting_statistics_object>
+   class voteable_statistics_object : public abstract_object<voteable_statistics_object>
    {
    public:
       static const uint8_t space_id = protocol_ids;
       static const uint8_t type_id  = voteable_statistics_object_type;
-      
+
       voteable_statistics_object(){}
 
       /* the block_num where the maintenance interval was performed */
@@ -75,27 +75,39 @@ namespace graphene { namespace chain {
    typedef multi_index_container<
       voteable_statistics_object,
       indexed_by<
-         ordered_unique< 
-            tag<by_id>, 
-            member< 
-               object, 
-               object_id_type, 
-               &object::id 
-            > 
+         ordered_unique<
+            tag<by_id>,
+            member<
+               object,
+               object_id_type,
+               &object::id
+            >
          >,
-         ordered_unique< 
+         ordered_unique<
             tag<by_vote_id>,
-            member< 
-               voteable_statistics_object, 
-               vote_id_type, 
-               &voteable_statistics_object::vote_id 
+            composite_key<
+               voteable_statistics_object,
+               member<
+                  voteable_statistics_object,
+                  vote_id_type,
+                  &voteable_statistics_object::vote_id
+               >,
+               member<
+                  voteable_statistics_object,
+                  uint32_t,
+                  &voteable_statistics_object::block_number
+               >
+            >,
+            composite_key_compare<
+               std::less<vote_id_type>,
+               std::greater<uint32_t>
             >
          >
       >
    > voteable_statistics_multi_index_type;
 
    typedef generic_index<
-      voteable_statistics_object, 
+      voteable_statistics_object,
       voteable_statistics_multi_index_type
    > voteable_statistics_index;
 
