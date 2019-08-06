@@ -70,44 +70,22 @@ namespace graphene { namespace chain {
    };
 
 
-   struct by_vote_id{};
-
-   typedef multi_index_container<
-      voteable_statistics_object,
+   //struct by_block_number{}; // declared in voting_statistics_object just let it like this?
+   typedef multi_index_container< voteable_statistics_object,
       indexed_by<
-         ordered_unique<
-            tag<by_id>,
-            member<
-               object,
-               object_id_type,
-               &object::id
-            >
+         ordered_unique< tag<by_id>,
+            member< object, object_id_type, &object::id >
          >,
-         ordered_unique<
-            tag<by_vote_id>,
-            composite_key<
-               voteable_statistics_object,
-               member<
-                  voteable_statistics_object,
-                  vote_id_type,
-                  &voteable_statistics_object::vote_id
-               >,
-               member<
-                  voteable_statistics_object,
-                  uint32_t,
-                  &voteable_statistics_object::block_number
-               >
-            >,
-            composite_key_compare<
-               std::less<vote_id_type>,
-               std::greater<uint32_t>
+         ordered_unique< tag<by_block_number>,
+            composite_key< voteable_statistics_object,
+               member< voteable_statistics_object, uint32_t,     &voteable_statistics_object::block_number >,
+               member< voteable_statistics_object, vote_id_type, &voteable_statistics_object::vote_id >
             >
          >
       >
    > voteable_statistics_multi_index_type;
 
-   typedef generic_index<
-      voteable_statistics_object,
+   typedef generic_index< voteable_statistics_object,
       voteable_statistics_multi_index_type
    > voteable_statistics_index;
 
