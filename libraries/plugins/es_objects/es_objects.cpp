@@ -150,10 +150,6 @@ bool es_objects_plugin_impl::index_database(const vector<object_id_type>& ids, s
 
       for (auto const &value: ids)
       {
-         const auto voting = ( voting_statistics_object::space_id << 8 | voting_statistics_object::type_id );
-         const auto bit_asset = asset_bitasset_data_object::space_id << 8 | asset_bitasset_data_object::type_id;
-         const auto val = value.space_type();
-
          switch( value.space_type() )
          {
             case( proposal_object::space_id << 8 | proposal_object::type_id ):
