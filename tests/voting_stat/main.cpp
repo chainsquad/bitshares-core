@@ -33,7 +33,7 @@
 
 #include <graphene/app/api.hpp>
 
-#include <graphene/chain/protocol/account.hpp>
+#include <graphene/protocol/account.hpp>
 
 #include <graphene/chain/voting_statistics_object.hpp>
 #include <graphene/chain/voteable_statistics_object.hpp>

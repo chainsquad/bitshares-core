@@ -28,8 +28,8 @@
 
 #include <fc/optional.hpp>
 
-#include <graphene/chain/protocol/types.hpp>
-#include <graphene/chain/protocol/vote.hpp>
+#include <graphene/protocol/types.hpp>
+#include <graphene/protocol/vote.hpp>
 
 #include <graphene/db/generic_index.hpp>
 #include <boost/multi_index/composite_key.hpp>

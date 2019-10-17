@@ -29,7 +29,7 @@
 #include <graphene/chain/witness_object.hpp>
 #include <graphene/chain/committee_member_object.hpp>
 
-#include <graphene/chain/protocol/config.hpp>
+#include <graphene/protocol/config.hpp>
 
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
