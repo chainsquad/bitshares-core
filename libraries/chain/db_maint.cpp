@@ -22,9 +22,9 @@
  * THE SOFTWARE.
  */
 
-#include <boost/multiprecision/integer.hpp>
-
 #include <fc/uint128.hpp>
+
+#include <graphene/protocol/market.hpp>
 
 #include <graphene/chain/database.hpp>
 #include <graphene/chain/fba_accumulator_id.hpp>
@@ -183,10 +183,10 @@ void database::pay_workers( share_type& budget )
       // Note: if there is a good chance that passed_time_count == day_count,
       //       for better performance, can avoid the 128 bit calculation by adding a check.
       //       Since it's not the case on BitShares mainnet, we're not using a check here.
-      fc::uint128 pay(requested_pay.value);
+      fc::uint128_t pay = requested_pay.value;
       pay *= passed_time_count;
       pay /= day_count;
-      requested_pay = pay.to_uint64();
+      requested_pay = static_cast<uint64_t>(pay);
 
       share_type actual_pay = std::min(budget, requested_pay);
       //ilog(" ==> Paying ${a} to worker ${w}", ("w", active_worker.id)("a", actual_pay));
@@ -305,9 +305,9 @@ void database::update_active_committee_members()
    assert( _committee_count_histogram_buffer.size() > 0 );
    share_type stake_target = (_total_voting_stake-_committee_count_histogram_buffer[0]) / 2;
 
-   /// accounts that vote for 0 or 1 witness do not get to express an opinion on
-   /// the number of witnesses to have (they abstain and are non-voting accounts)
-   uint64_t stake_tally = 0; // _committee_count_histogram_buffer[0];
+   /// accounts that vote for 0 or 1 committee member do not get to express an opinion on
+   /// the number of committee members to have (they abstain and are non-voting accounts)
+   share_type stake_tally = 0;
    size_t committee_member_count = 0;
    if( stake_target > 0 )
    {
@@ -441,7 +441,7 @@ void database::initialize_budget_record( fc::time_point_sec now, budget_record& 
    budget_u128 += ((uint64_t(1) << GRAPHENE_CORE_ASSET_CYCLE_RATE_BITS) - 1);
    budget_u128 >>= GRAPHENE_CORE_ASSET_CYCLE_RATE_BITS;
    if( budget_u128 < reserve.value )
-      rec.total_budget = share_type(budget_u128.to_uint64());
+      rec.total_budget = share_type(static_cast<uint64_t>(budget_u128));
    else
       rec.total_budget = reserve;
 
@@ -496,7 +496,7 @@ void database::process_budget()
       if( worker_budget_u128 >= available_funds.value )
          worker_budget = available_funds;
       else
-         worker_budget = worker_budget_u128.to_uint64();
+         worker_budget = static_cast<uint64_t>(worker_budget_u128);
       rec.worker_budget = worker_budget;
       available_funds -= worker_budget;
 
@@ -554,11 +554,11 @@ void visit_special_authorities( const database& db, Visitor visit )
    for( const special_authority_object& sao : sa_idx )
    {
       const account_object& acct = sao.account(db);
-      if( acct.owner_special_authority.which() != special_authority::tag< no_special_authority >::value )
+      if( !acct.owner_special_authority.is_type< no_special_authority >() )
       {
          visit( acct, true, acct.owner_special_authority );
       }
-      if( acct.active_special_authority.which() != special_authority::tag< no_special_authority >::value )
+      if( !acct.active_special_authority.is_type< no_special_authority >() )
       {
          visit( acct, false, acct.active_special_authority );
       }
@@ -570,7 +570,7 @@ void update_top_n_authorities( database& db )
    visit_special_authorities( db,
    [&]( const account_object& acct, bool is_owner, const special_authority& auth )
    {
-      if( auth.which() == special_authority::tag< top_holders_special_authority >::value )
+      if( auth.is_type< top_holders_special_authority >() )
       {
          // use index to grab the top N holders of the asset and vote_counter to obtain the weights
 
@@ -636,12 +636,12 @@ void split_fba_balance(
    fc::uint128_t buyback_amount_128 = fba.accumulated_fba_fees.value;
    buyback_amount_128 *= designated_asset_buyback_pct;
    buyback_amount_128 /= GRAPHENE_100_PERCENT;
-   share_type buyback_amount = buyback_amount_128.to_uint64();
+   share_type buyback_amount = static_cast<uint64_t>(buyback_amount_128);
 
    fc::uint128_t issuer_amount_128 = fba.accumulated_fba_fees.value;
    issuer_amount_128 *= designated_asset_issuer_pct;
    issuer_amount_128 /= GRAPHENE_100_PERCENT;
-   share_type issuer_amount = issuer_amount_128.to_uint64();
+   share_type issuer_amount = static_cast<uint64_t>(issuer_amount_128);
 
    // this assert should never fail
    FC_ASSERT( buyback_amount + issuer_amount <= fba.accumulated_fba_fees );

@@ -31,13 +31,11 @@
 #include <graphene/chain/htlc_object.hpp>
 #include <graphene/chain/market_object.hpp>
 #include <graphene/chain/proposal_object.hpp>
-#include <graphene/chain/transaction_object.hpp>
+#include <graphene/chain/transaction_history_object.hpp>
 #include <graphene/chain/withdraw_permission_object.hpp>
 #include <graphene/chain/witness_object.hpp>
 
-#include <graphene/chain/protocol/fee_schedule.hpp>
-
-#include <fc/uint128.hpp>
+#include <graphene/protocol/fee_schedule.hpp>
 
 namespace graphene { namespace chain {
 
@@ -145,7 +143,8 @@ void database::clear_expired_transactions()
 { try {
    //Look for expired transactions in the deduplication list, and remove them.
    //Transactions must have expired by at least two forking windows in order to be removed.
-   auto& transaction_idx = static_cast<transaction_index&>(get_mutable_index(implementation_ids, impl_transaction_object_type));
+   auto& transaction_idx = static_cast<transaction_index&>(get_mutable_index(implementation_ids,
+                                                                             impl_transaction_history_object_type));
    const auto& dedupe_index = transaction_idx.indices().get<by_expiration>();
    while( (!dedupe_index.empty()) && (head_block_time() > dedupe_index.begin()->trx.expiration) )
       transaction_idx.remove(*dedupe_index.begin());
@@ -380,6 +379,13 @@ void database::clear_expired_orders()
             cancel_settle_order(order);
             continue;
          }
+         if( GRAPHENE_100_PERCENT == mia.options.force_settlement_offset_percent ) // settle something for nothing
+         {
+            ilog( "Canceling a force settlement in ${asset} because settlement offset is 100%",
+                  ("asset", mia_object.symbol));
+            cancel_settle_order(order);
+            continue;
+         }
          if( max_settlement_volume.asset_id != current_asset )
             max_settlement_volume = mia_object.amount(mia.max_force_settlement_volume(mia_object.dynamic_data(*this).current_supply));
          // When current_asset_finished is true, this would be the 2nd time processing the same order.
@@ -411,9 +417,9 @@ void database::clear_expired_orders()
          {
             auto& pays = order.balance;
             auto receives = (order.balance * mia.current_feed.settlement_price);
-            receives.amount = ( fc::uint128_t(receives.amount.value) *
+            receives.amount = static_cast<uint64_t>( fc::uint128_t(receives.amount.value) *
                                 (GRAPHENE_100_PERCENT - mia.options.force_settlement_offset_percent) /
-                                GRAPHENE_100_PERCENT ).to_uint64();
+                                GRAPHENE_100_PERCENT );
             assert(receives <= order.balance * mia.current_feed.settlement_price);
             settlement_price = pays / receives;
          }

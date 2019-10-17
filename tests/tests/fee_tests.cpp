@@ -22,8 +22,6 @@
  * THE SOFTWARE.
  */
 
-#include <fc/uint128.hpp>
-
 #include <graphene/chain/hardfork.hpp>
 
 #include <graphene/chain/fba_accumulator_id.hpp>
@@ -33,6 +31,8 @@
 #include <graphene/chain/proposal_object.hpp>
 #include <graphene/chain/vesting_balance_object.hpp>
 #include <graphene/chain/exceptions.hpp>
+
+#include <fc/uint128.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -274,8 +274,6 @@ BOOST_AUTO_TEST_CASE(asset_claim_pool_test)
 
         };
 
-        const asset_object& core_asset = asset_id_type()(db);
-
         // deposit 100 BTS to the fee pool of ALICEUSD asset
         fund_fee_pool( alice_id(db), aliceusd_id(db), _core(100).amount );
 
@@ -349,7 +347,7 @@ uint64_t pct( uint64_t percentage, uint64_t val )
    fc::uint128_t x = percentage;
    x *= val;
    x /= GRAPHENE_100_PERCENT;
-   return x.to_uint64();
+   return static_cast<uint64_t>(x);
 }
 
 uint64_t pct( uint64_t percentage0, uint64_t percentage1, uint64_t val )

@@ -32,14 +32,17 @@
 
 #include <fc/uint128.hpp>
 
-namespace graphene { namespace chain { namespace detail {
+namespace graphene { namespace chain {
 
-   uint64_t calculate_percent(const share_type& value, uint16_t percent)
+namespace detail {
+
+   share_type calculate_percent(const share_type& value, uint16_t percent)
    {
-      fc::uint128 a(value.value);
+      fc::uint128_t a(value.value);
       a *= percent;
       a /= GRAPHENE_100_PERCENT;
-      return a.to_uint64();
+      FC_ASSERT( a <= GRAPHENE_MAX_SHARE_SUPPLY, "overflow when calculating percent" );
+      return static_cast<int64_t>(a);
    }
 
 } //detail
@@ -255,13 +258,13 @@ void database::cancel_limit_order( const limit_order_object& order, bool create_
             }
             else
             {
-               fc::uint128 fee128( deferred_paid_fee.amount.value );
+               fc::uint128_t fee128( deferred_paid_fee.amount.value );
                fee128 *= core_cancel_fee.amount.value;
                // to round up
                fee128 += order.deferred_fee.value;
                fee128 -= 1;
                fee128 /= order.deferred_fee.value;
-               share_type cancel_fee_amount = fee128.to_uint64();
+               share_type cancel_fee_amount = static_cast<int64_t>(fee128);
                // cancel_fee should be positive, pay it to asset's accumulated_fees
                fee_asset_dyn_data = &deferred_paid_fee.asset_id(*this).dynamic_asset_data_id(*this);
                modify( *fee_asset_dyn_data, [&](asset_dynamic_data_object& addo) {
@@ -1247,16 +1250,20 @@ asset database::pay_market_fees(const account_object& seller, const asset_object
                reward = recv_asset.amount(reward_value);
                FC_ASSERT( reward < issuer_fees, "Market reward should be less than issuer fees");
                // cut referrer percent from reward
-               const auto referrer_rewards_percentage = seller.referrer_rewards_percentage;
-               const auto referrer_rewards_value = detail::calculate_percent(reward.amount, referrer_rewards_percentage);
                auto registrar_reward = reward;
-
-               if ( referrer_rewards_value > 0 && is_authorized_asset(*this, seller.referrer(*this), recv_asset))
+               if( seller.referrer != seller.registrar )
                {
-                  FC_ASSERT ( referrer_rewards_value <= reward.amount.value, "Referrer reward shouldn't be greater than total reward" );
-                  const asset referrer_reward = recv_asset.amount(referrer_rewards_value);
-                  registrar_reward -= referrer_reward;
-                  deposit_market_fee_vesting_balance(seller.referrer, referrer_reward);
+                  const auto referrer_rewards_value = detail::calculate_percent( reward.amount,
+                                                                                 seller.referrer_rewards_percentage );
+
+                  if ( referrer_rewards_value > 0 && is_authorized_asset(*this, seller.referrer(*this), recv_asset) )
+                  {
+                     FC_ASSERT ( referrer_rewards_value <= reward.amount.value,
+                                 "Referrer reward shouldn't be greater than total reward" );
+                     const asset referrer_reward = recv_asset.amount(referrer_rewards_value);
+                     registrar_reward -= referrer_reward;
+                     deposit_market_fee_vesting_balance(seller.referrer, referrer_reward);
+                  }
                }
                deposit_market_fee_vesting_balance(seller.registrar, registrar_reward);
             }

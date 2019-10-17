@@ -31,12 +31,14 @@
 #include <graphene/chain/operation_history_object.hpp>
 
 #include <graphene/chain/proposal_object.hpp>
-#include <graphene/chain/transaction_object.hpp>
+#include <graphene/chain/transaction_history_object.hpp>
 #include <graphene/chain/witness_object.hpp>
-#include <graphene/chain/protocol/fee_schedule.hpp>
 #include <graphene/chain/exceptions.hpp>
 #include <graphene/chain/evaluator.hpp>
 
+#include <graphene/protocol/fee_schedule.hpp>
+
+#include <fc/io/raw.hpp>
 #include <fc/thread/parallel.hpp>
 
 namespace graphene { namespace chain {
@@ -634,7 +636,12 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
    auto& trx_idx = get_mutable_index_type<transaction_index>();
    const chain_id_type& chain_id = get_chain_id();
    if( !(skip & skip_transaction_dupe_check) )
-      FC_ASSERT( trx_idx.indices().get<by_trx_id>().find(trx.id()) == trx_idx.indices().get<by_trx_id>().end() );
+   {
+      GRAPHENE_ASSERT( trx_idx.indices().get<by_trx_id>().find(trx.id()) == trx_idx.indices().get<by_trx_id>().end(),
+                       duplicate_transaction,
+                       "Transaction '${txid}' is already in the database",
+                       ("txid",trx.id()) );
+   }
    transaction_evaluation_state eval_state(this);
    const chain_parameters& chain_parameters = get_global_properties().parameters;
    eval_state._trx = &trx;
@@ -660,7 +667,7 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
          const auto& tapos_block_summary = block_summary_id_type( trx.ref_block_num )(*this);
 
          //Verify TaPoS block summary has correct ID prefix, and that this block's time is not past the expiration
-         FC_ASSERT( trx.ref_block_prefix == tapos_block_summary.block_id._hash[1] );
+         FC_ASSERT( trx.ref_block_prefix == tapos_block_summary.block_id._hash[1].value() );
       }
 
       fc::time_point_sec now = head_block_time();
@@ -677,7 +684,7 @@ processed_transaction database::_apply_transaction(const signed_transaction& trx
    //Insert transaction into unique transactions database.
    if( !(skip & skip_transaction_dupe_check) )
    {
-      create<transaction_object>([&trx](transaction_object& transaction) {
+      create<transaction_history_object>([&trx](transaction_history_object& transaction) {
          transaction.trx_id = trx.id();
          transaction.trx = trx;
       });
@@ -802,7 +809,7 @@ fc::future<void> database::precompute_parallel( const signed_block& block, const
    block.id();
 
    if( workers.empty() )
-      return fc::future< void >( fc::promise< void >::ptr( new fc::promise< void >( true ) ) );
+      return fc::future< void >( fc::promise< void >::create( true ) );
 
    auto first = workers.begin();
    auto worker = first;

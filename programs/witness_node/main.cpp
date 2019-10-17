@@ -33,6 +33,7 @@
 #include <graphene/snapshot/snapshot.hpp>
 #include <graphene/es_objects/es_objects.hpp>
 #include <graphene/grouped_orders/grouped_orders_plugin.hpp>
+#include <graphene/api_helper_indexes/api_helper_indexes.hpp>
 #include <graphene/voting_stat/voting_stat_plugin.hpp>
 
 #include <fc/thread/thread.hpp>
@@ -69,8 +70,10 @@ int main(int argc, char** argv) {
             ("data-dir,d", bpo::value<boost::filesystem::path>()->default_value("witness_node_data_dir"),
                     "Directory containing databases, configuration file, etc.")
             ("version,v", "Display version information")
-            ("plugins", bpo::value<std::string>()->default_value("witness account_history market_history grouped_orders"),
-                    "Space-separated list of plugins to activate");
+            ("plugins", bpo::value<std::string>()
+                            ->default_value("witness account_history market_history grouped_orders api_helper_indexes"),
+                    "Space-separated list of plugins to activate")
+            ("ignore-api-helper-indexes-warning", "Do not exit if api_helper_indexes plugin is not enabled.");
 
       bpo::variables_map options;
 
@@ -79,8 +82,10 @@ int main(int argc, char** argv) {
       cfg_options.add(cfg);
 
       cfg_options.add_options()
-              ("plugins", bpo::value<std::string>()->default_value("witness account_history market_history grouped_orders"),
-               "Space-separated list of plugins to activate");
+              ("plugins", bpo::value<std::string>()
+	                      ->default_value("witness account_history market_history grouped_orders api_helper_indexes"),
+               "Space-separated list of plugins to activate")
+            ("ignore-api-helper-indexes-warning", "Do not exit if api_helper_indexes plugin is not enabled.");
 
       auto witness_plug = node->register_plugin<witness_plugin::witness_plugin>();
       auto debug_witness_plug = node->register_plugin<debug_witness_plugin::debug_witness_plugin>();
@@ -91,8 +96,8 @@ int main(int argc, char** argv) {
       auto snapshot_plug = node->register_plugin<snapshot_plugin::snapshot_plugin>();
       auto es_objects_plug = node->register_plugin<es_objects::es_objects_plugin>();
       auto grouped_orders_plug = node->register_plugin<grouped_orders::grouped_orders_plugin>();
+      auto api_helper_indexes_plug = node->register_plugin<api_helper_indexes::api_helper_indexes>();
       auto voting_stat_plug = node->register_plugin<voting_stat::voting_stat_plugin>();
-      
 
       // add plugin options to config
       try
@@ -142,6 +147,15 @@ int main(int argc, char** argv) {
          return 1;
       }
 
+      if( !plugins.count("api_helper_indexes") && !options.count("ignore-api-helper-indexes-warning")
+          && ( options.count("rpc-endpoint") || options.count("rpc-tls-endpoint") ) )
+      {
+         std::cerr << "\nIf this is an API node, please enable api_helper_indexes plugin."
+                      "\nIf this is not an API node, please start with \"--ignore-api-helper-indexes-warning\""
+                      " or enable it in config.ini file.\n\n";
+         return 1;
+      }
+
       std::for_each(plugins.begin(), plugins.end(), [node](const std::string& plug) mutable {
          if (!plug.empty()) {
             node->enable_plugin(plug);
@@ -156,7 +170,7 @@ int main(int argc, char** argv) {
       node->startup();
       node->startup_plugins();
 
-      fc::promise<int>::ptr exit_promise = new fc::promise<int>("UNIX Signal Handler");
+      fc::promise<int>::ptr exit_promise = fc::promise<int>::create("UNIX Signal Handler");
 
       fc::set_signal_handler([&exit_promise](int signal) {
          elog( "Caught SIGINT attempting to exit cleanly" );
